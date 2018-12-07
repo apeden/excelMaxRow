@@ -25,7 +25,6 @@ class RTQuicSheet(object):
         except:
             self.sheet = None
             print("Could not find sheet")
-        self.row = None
         self.row_list = []
         self.row_max = None
         self.time_to_max = None ##eventually will be in seconds
@@ -44,15 +43,19 @@ class RTQuicSheet(object):
     reading the row (left to right).
     """
     def set_row_list(self, row_start, row):
-        self.row = row 
+        print("row number sent to set_row_list "+str(row))
+        self.row_list = []
         for i in range(row_start, 1000):        
             try:
                 val = self.sheet.cell(row, column=i).value
+                assert(type(val) == int)
             except:   
                 print("A problem occurred reading data from a row")
+                self.row_list = None
             if val == None:
                 break
             self.row_list = self.row_list + [val]
+        print(self.row_list[0:20])
 
 
     """
@@ -92,7 +95,7 @@ class RTQuicSheet(object):
                 self.row_list[i+2] > self.threshold):
                 self.lag = i*(RTQuicSheet.SECONDS_PER_CYCLE)##in seconds
                 return           
-        print ("no lagtime found for row " + str(self.row))
+        print ("no lagtime found for row ")
         
     def getLag(self):
             return  self.lag ##in seconds
@@ -106,7 +109,8 @@ class RTQuicSheet(object):
                 minutes = str(func()%3600//60)
                 return hours +" hours: "+ minutes + " minutes"
             except:
-                print("Could not convert to hours")    
+                print("Could not convert to hours")
+                return("N/A")
         return wrap
 
     def __str__(self):
