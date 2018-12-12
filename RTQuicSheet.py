@@ -20,11 +20,8 @@ class RTQuicSheet(object):
             self.wb = None
             print("Could not open file"+ self.excel_workbook_name)
         ##get sheet as file object
-        try:
-            self.sheet = self.wb[self.sheet_name]
-        except:
-            self.sheet = None
-            print("Could not find sheet")
+    
+        self.sheet = self.wb[self.sheet_name]
         self.row_list = []
         self.row_max = None
         self.time_to_max = None ##eventually will be in seconds
@@ -48,30 +45,43 @@ class RTQuicSheet(object):
         for i in range(row_start, 1000):        
             try:
                 val = self.sheet.cell(row, column=i).value
-                assert(type(val) == int)
-            except:   
+            except AttributeError:   
                 print("A problem occurred reading data from a row")
-                self.row_list = None
+                
             if val == None:
                 break
             self.row_list = self.row_list + [val]
+            
         print(self.row_list[0:20])
 
-
+    def get_row_list(self):
+        return self.row_list
     """
     reads from a row as a list of ints and/or floats and obtains maximum value
     and time (in hours) when max value occurred
     """
     def set_row_max(self):
+        print("called self row max")
+        print("before call its " +str(self.row_max))
+        try:
+            assert(len(self.row_list) > 0)
+        except:
+            print("row list is empty. cannot analyse row")
+            self.row_max = None
         for elem in self.row_list:
-            assert(type(elem) == int or type(elem) == float)
-            self.row_max = max(self.row_list)
-
+            if(type(elem) == int or type(elem) == float):
+                self.row_max = max(self.row_list)
+            else:
+                print("item in row list is not a number")
+                self.row_max = None
+        print("Now its " +str(self.row_max))
+                
     def get_row_max(self):
         return self.row_max
 
     def set_time_to_max(self):
         ## in seconds
+        self.set_row_max()
         self.time_to_max = self.row_list.index(self.row_max)*(RTQuicSheet.SECONDS_PER_CYCLE) 
 
     def get_time_to_max(self):
@@ -88,7 +98,7 @@ class RTQuicSheet(object):
 
     def setLag(self):
         self.setThreshold()
-        self.lag = None
+        self.lag = 0
         for i in range(len(self.row_list)-2):
             if (self.row_list[i] > self.threshold and
                 self.row_list[i+1] > self.threshold and
@@ -101,17 +111,11 @@ class RTQuicSheet(object):
             return  self.lag ##in seconds
 
     "takes a time in seconds and converts to h:m format"
-    def hours(self, func):
-        
-        def wrap():
-            try:
-                hours = str(func()//3600) 
-                minutes = str(func()%3600//60)
-                return hours +" hours: "+ minutes + " minutes"
-            except:
-                print("Could not convert to hours")
-                return("N/A")
-        return wrap
+    def hours(self, time_sec):
+        hours = str(time_sec//3600) 
+        minutes = str(time_sec%3600//60)
+        return hours +" hours: "+ minutes + " minutes"
+
 
     def __str__(self):
         return "Workbook: "+ self.excel_workbook_name + " Sheet: " + self.sheet_name
