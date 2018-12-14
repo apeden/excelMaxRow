@@ -1,17 +1,11 @@
 from openpyxl import Workbook
 from os import listdir
-
-PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
-
-list_of_files = (listdir(PATH_TO_FILES)) 
-
-
-
 from RTQuicSheet import *
 
 
 class SheetAnalyser(object):
-     
+    PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
+    list_of_files = (listdir(PATH_TO_FILES))      
     def __init__(self, raw_data, raw_data_sheet):
         self.row_num = 2 #row in destination excel file
         self.raw_data = raw_data
@@ -95,9 +89,27 @@ class SheetAnalyser(object):
         source_file = source_file.replace(" ", "_")
         return ("Analysis_of_"+ "string")
         
+    def analyse(self, first_row, last_row, first column, last_column): #first and last row in source file
+        self.data_label_row_filler()
+        for i in range(first_row, last_row + 1,):
+            try:
+                self.set_result_list(first_column, last_column + 1)
+            except ValueError:
+                self.save_wb()
+                print("had to stop, but file still saved")
+                return
+            self.row_filler()
+        self.save_wb()
+
+    def save_file(sheet_analyser):
+        try:
+            sheet_analyser.save_wb() 
+        except PermissionError:
+            print("Could not save to default result file")
+
+
 
 class SheetAnalyserMeans(SheetAnalyser):
-
                 
     def set_result_list(self, row_start, row):
         self.result_list = []
@@ -120,28 +132,7 @@ class SheetAnalyserMeans(SheetAnalyser):
                             lagHours]
         
 
-def analyse(workbook, sheet):
-    try:
-        t = SheetAnalyser(workbook, sheet)
-    except AttributeError:
-        print("Could not start SheetAnalyser. Problem with file or sheet names?")
-    t.data_label_row_filler()
-    for i in range(13,110):
-        try:
-            t.set_result_list(14,i)
-        except ValueError:
-            save_file(t)
-            print("had to stop, but file still saved")
-            return
-        t.row_filler()
-    save_file(t)
-    del t
+    
 
 
-def save_file(sheet_analyser):
-    try:
-        sheet_analyser.save_wb() 
-    except PermissionError:
-        print("Could not save to default result file")
-
-analyse(PATH_TO_FILES+"\\"+list_of_files[0], "Results")
+analyse(PATH_TO_FILES+"\\"+list_of_files[0], "Results") ## NEED TO CHANGE THIS
