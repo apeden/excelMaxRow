@@ -15,13 +15,14 @@ class RTQuicSheet(object):
         self.sheet_name = sheet_name
         ##set workbook as file object
         try:
-            self.wb = load_workbook(self.excel_workbook_name)
+            self.wb = load_workbook(self.excel_workbook_name, data_only = True)
         except IOError:
             self.wb = None
             print("Could not open file"+ self.excel_workbook_name)
         ##get sheet as file object
     
         self.sheet = self.wb[self.sheet_name]
+        self.row_label = ""
         self.row_list = []
         self.row_max = None
         self.time_to_max = None ##eventually will be in seconds
@@ -34,6 +35,17 @@ class RTQuicSheet(object):
         
         return wb
     
+    def set_row_label(self, row):
+        try:
+            val = self.sheet.cell(row, column=1).value
+        except AttributeError:   
+            print("A problem occurred setting the row label.")
+        self.row_label = val
+
+    def get_row_label(self):
+        return self.row_label
+
+
     """
     reads a selected row from a sheet file object and returns a list of what's in it.
     row_start refers the column number i.e. A = 1, B = 2 etc where you want to start
@@ -56,17 +68,18 @@ class RTQuicSheet(object):
 
     def get_row_list(self):
         return self.row_list
+    
     """
     reads from a row as a list of ints and/or floats and obtains maximum value
     and time (in hours) when max value occurred
     """
     def set_row_max(self):
-        print("called self row max")
-        print("before call its " +str(self.row_max))
+        print("Called self row max.")
+        print("Before call it's: " +str(self.row_max))
         try:
             assert(len(self.row_list) > 0)
         except:
-            print("row list is empty. cannot analyse row")
+            print("Row list is empty. Cannot analyse row")
             self.row_max = None
         for elem in self.row_list:
             if(type(elem) == int or type(elem) == float):
@@ -74,7 +87,7 @@ class RTQuicSheet(object):
             else:
                 print("item in row list is not a number")
                 self.row_max = None
-        print("Now its " +str(self.row_max))
+        print("Now it's " +str(self.row_max))
                 
     def get_row_max(self):
         return self.row_max
