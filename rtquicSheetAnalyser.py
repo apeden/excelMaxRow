@@ -8,7 +8,7 @@ class Error(Exception):
 class FileNotSavedError(Error):
     pass
 
-PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
+PATH_TO_FILES = "C:\\Users\\user\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
 list_of_files = (listdir(PATH_TO_FILES))
 
 """Analyses data in an excel file row by row
@@ -162,11 +162,21 @@ class SheetAnalyserMeans(SheetAnalyser):
         maxVal = mean_row[0]
         maxHours = self.rtquic1.hours(mean_row[1])
         lagHours = self.rtquic1.hours(mean_row[2])
+        gradient = mean_row[3]
+        result = ""
+        if upper_row[5] and lower_row[5]:
+            result = "Positive"
+        elif upper_row[5] or lower_row[5]:
+            result = "Negative - interesting finding"
+        else:
+            result = "Negative"
         #list of mean values with times in hours
         self.result_list = [Label,
                             maxVal,
                             maxHours,
-                            lagHours]
+                            lagHours,
+                            gradient,
+                            result]
 
     def analyse(self, first_row, last_row, column_start): #first and last row in source file
         self.data_label_row_filler()
@@ -180,9 +190,6 @@ class SheetAnalyserMeans(SheetAnalyser):
                 return
             self.row_filler()
         self.save_wb()
-
-
-
       
 ##Scope of sheet
 row_origin = 13
@@ -190,7 +197,7 @@ row_end = 108
 column_origin = 4
 
 ##METHOD FOR ANALYSING AN INDIVIDUAL EXCEL FILE
-t = SheetAnalyser(PATH_TO_FILES+"\\"+"RTQUIC_READ_19_004.xlsx", "All_Cycles")                
+t = SheetAnalyser(PATH_TO_FILES+"\\"+"RTQUIC_READ_19_003.xlsx", "All_Cycles")                
 t.analyse(row_origin, row_end, column_origin)
 
 ##METHOD FOR ANALYSING A FOLDER OF EXCEL FILES
