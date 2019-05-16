@@ -5,7 +5,6 @@ from openpyxl import load_workbook
 import statistics
 
 class RTQuicSheet(object):
-    
     def __init__(self, excel_workbook_name, sheet_name):
         self.SECONDS_PER_CYCLE = 949
         #clear previous workbook
@@ -22,7 +21,7 @@ class RTQuicSheet(object):
         try:
             self.sheet = self.wb[self.sheet_name]
         except:
-            print("Could not find sheet in source data file")
+            print("Could not find sheet "+ self.sheet_name + "in source data file for " + self.excel_workbook_name)
         self.row_label = ""
         self.row_list = []
         self.column_list = []
@@ -36,26 +35,25 @@ class RTQuicSheet(object):
         self.time_to_baseline = None ##eventually will be in seconds
         self.time_baseline_to_max = None ##eventually will be in seconds
         self.gradient = 0.0 ## fluoresecent units/sec
-
     def getSECONDS_PER_CYCLE(self):
         return self.SECONDS_PER_CYCLE
-
     def set_row_label(self, row):
         try:
             val = self.sheet.cell(row, column=1).value
         except:
             print("A problem occurred setting the row label.")
         self.row_label = val
-
     def get_row_label(self):
         return self.row_label
-
     def get_cell_val(self, row, column):
         try:
             val = self.sheet.cell(row, column).value
         except:
             print("A problem occurred reading data from a row")
         return val
+    def _str_(self):
+        return "Workbook: ",self.excel_workbook_name, "Sheet: ", self.sheet_name
+
 
     """
     reads a selected row (up to 1000 cells) from a sheet file object and returns a list of what's in it.
@@ -196,7 +194,7 @@ class RTQuicSheet(object):
         return self.gradient
 
     def is_positive(self):
-        return (self.lag > 0 and self.lag < 360000)
+        return (self.lag > 0 and (self.lag + (2* self.SECONDS_PER_CYCLE)) < 360000)
 
     "takes a time in seconds and converts to h:m format"
     def hours(self, time_sec):

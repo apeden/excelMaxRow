@@ -8,7 +8,7 @@ class Error(Exception):
 class FileNotSavedError(Error):
     pass
 
-PATH_TO_FILES = "C:\\Users\\user\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
+PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
 list_of_files = (listdir(PATH_TO_FILES))
 
 """Analyses data in an excel file row by row
@@ -23,29 +23,25 @@ class SheetAnalyser(object):
         try:
             self.rtquic1 = RTQuicSheet(self.raw_data, self.raw_data_sheet)
         except:
-            print("Could not generate RTQuicSheet object for analysing data")
+            print("Could not generate RTQuicSheet object for analysing data "+ self.raw_data)
         try:
             self.wb = Workbook()
         except:
-            print("Could not generate destination workbook object")
+            print("Could not generate destination workbook object for " + self.raw_data)
         try:
             self.ws = self.wb.active
             print(self.ws)
         except:
             print("Could not generate active worksheet within distination workbook for " + self.raw_data)      
-            raise AttributeError
-        
+            raise AttributeError   
     def set_analysis_num(self, num):
         self.analysis_num = num
-
     def set_sheet_baseline(self):
         self.rtquic1.set_column_list(column_origin,row_origin)
         if len(self.rtquic1.get_column_list()) > 0:
             self.rtquic1.setBaseMean()
             self.rtquic1.setBaseSTDEV()
             self.rtquic1.setBaseline()
-        
-
     def set_result(self, column_start, row):##read row left to right from start point = column_start
         self.rtquic1.set_row_label(row)
         self.rtquic1.set_row_list(column_start, row)
@@ -60,18 +56,15 @@ class SheetAnalyser(object):
             self.rtquic1.set_time_to_baseline()
             self.rtquic1.set_time_baseline_to_max()
             self.rtquic1.set_gradient()      
-        
-
     def get_result(self):
         return (self.rtquic1.get_row_label(),
                 self.rtquic1.get_row_max(),
                 self.rtquic1.get_time_to_max(),
                 self.rtquic1.getLag(),
                 self.rtquic1.get_gradient(),
-                self.rtquic1.is_positive())
-        
+                self.rtquic1.is_positive())       
     def set_result_list(self, column_start, row):
-        print("row number sent to set result list "+str(row))
+        print("row number sent to set result list "+str(row)+" from "+ str(self.rtquic1))
         self.result_list = []
         self.row_num += 1
         self.set_result(column_start, row)
@@ -91,7 +84,6 @@ class SheetAnalyser(object):
                             lagHours,
                             gradient,
                             result]
-
     def row_filler(self):
         try:
             for i in range(len(self.result_list)):
@@ -100,7 +92,6 @@ class SheetAnalyser(object):
                         value = self.result_list[i])
         except:
             print("Could not fill a row")
-
     def data_label_row_filler(self):
         data_labels = ["Label",
                        "Max Val",
@@ -116,19 +107,16 @@ class SheetAnalyser(object):
                         value = data_labels[i])
         except:
             print("Could not fill title row")
-
     def save_wb(self):
         try:
             self.wb.save(self.__str__()+".xlsx")
         except:
             print("An error occurred when I tried to save the file")
             raise FileNotSavedError
-
     def __str__(self):
         source_file = self.raw_data.replace("-", "_")
         source_file = source_file.replace(" ", "_")
         return ("Analysis_of_File"+ str(self.analysis_num))
-        
     def analyse(self, first_row, last_row, column_start): #first and last row in source file
         self.data_label_row_filler()
         self.set_sheet_baseline()
@@ -138,15 +126,12 @@ class SheetAnalyser(object):
             except ValueError:
                 self.save_wb()
                 print("had to stop, but file still saved")
-                return
             self.row_filler()
         self.save_wb()
 
-
 """Analyses data in an excel file duplicate row by duplicate row
 Puts results in a destination excel file"""
-class SheetAnalyserMeans(SheetAnalyser):
-                
+class SheetAnalyserMeans(SheetAnalyser):                
     def set_result_list(self, row_start, row):
         self.result_list = []
         self.row_num += 1
@@ -157,8 +142,7 @@ class SheetAnalyserMeans(SheetAnalyser):
         lower_row = self.get_result()
         mean_row = ()
         for i in range (1,len(upper_row)):
-            mean_row = mean_row +(((upper_row[i]+ lower_row[i])/2),)
-        
+            mean_row = mean_row +(((upper_row[i]+ lower_row[i])/2),)   
         maxVal = mean_row[0]
         maxHours = self.rtquic1.hours(mean_row[1])
         lagHours = self.rtquic1.hours(mean_row[2])
@@ -177,7 +161,6 @@ class SheetAnalyserMeans(SheetAnalyser):
                             lagHours,
                             gradient,
                             result]
-
     def analyse(self, first_row, last_row, column_start): #first and last row in source file
         self.data_label_row_filler()
         self.set_sheet_baseline()
@@ -190,24 +173,55 @@ class SheetAnalyserMeans(SheetAnalyser):
                 return
             self.row_filler()
         self.save_wb()
-      
-##Scope of sheet
+        
+"""Analyses data in an excel file sheet row by row
+and gets lag time, gradient, max val, time to max
+all as floats"""
+class SheetAnalyserForCluster(SheetAnalyser):
+    def set_result_list(self, column_start, row):
+        print("row number sent to set result list "+str(row))
+        self.result_list = []
+        self.row_num += 1
+        self.set_result(column_start, row)
+        Label = self.rtquic1.get_row_label()
+        maxVal = self.rtquic1.get_row_max()
+        maxHours = self.rtquic1.get_time_to_max()
+        lagHours = self.rtquic1.getLag()
+        gradient = self.rtquic1.get_gradient()
+        result = ""
+        self.result_list = [Label,
+                            maxVal,
+                            maxHours,
+                            lagHours,
+                            gradient]
+
+
+
+
+##METHOD FOR ANALYSING AN INDIVIDUAL EXCEL FILE
 row_origin = 13
 row_end = 108
 column_origin = 4
 
-##METHOD FOR ANALYSING AN INDIVIDUAL EXCEL FILE
-t = SheetAnalyser(PATH_TO_FILES+"\\"+"RTQUIC_READ_19_003.xlsx", "All_Cycles")                
-t.analyse(row_origin, row_end, column_origin)
+##def singleSheetAnalysis(RTQUICname, row_origin, row_end, column_origin, means = True):
+##    if means == True:
+##        method = SheetAnalyserMeans
+##    else:
+##        method = SheetAnalyser
+##    t = method(PATH_TO_FILES+"\\"+"RTQUIC_READ_"+RTQUICname+".xlsx", "All Cycles")                
+##    t.analyse(row_origin, row_end, column_origin)
+##
+##singleSheetAnalysis("19_007", row_origin, row_end, column_origin, means = False)
+
 
 ##METHOD FOR ANALYSING A FOLDER OF EXCEL FILES
-##t= None
-##for i in range(len(list_of_files)): 
-##    if t != None:
-##        del t 
-##    t = SheetAnalyser(PATH_TO_FILES+"\\"+list_of_files[i], "Results")
-##    t.set_analysis_num(i) #keeps track of excel sheets analysed, for generating separate destination files
-##    t.analyse(13, 108, 14)
+t= None
+for i in range(len(list_of_files)): 
+    if t != None:
+        del t 
+    t = SheetAnalyser(PATH_TO_FILES+"\\"+list_of_files[i], "Results")
+    t.set_analysis_num(i) #keeps track of excel sheets analysed, for generating separate destination files
+    t.analyse(13, 108, 14)
     
 ##ANALYSIS OF ONE COLUMN FROM ONE SHEET
 
