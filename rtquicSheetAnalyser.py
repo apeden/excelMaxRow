@@ -30,10 +30,8 @@ class SheetAnalyser(object):
             print("Could not generate destination workbook object for " + self.raw_data)
         try:
             self.ws = self.wb.active
-            print(self.ws)
         except:
-            print("Could not generate active worksheet within distination workbook for " + self.raw_data)      
-            raise AttributeError   
+            print("Could not generate active worksheet within distination workbook for " + self.raw_data)        
     def set_analysis_num(self, num):
         self.analysis_num = num
     def set_sheet_baseline(self):
@@ -57,12 +55,8 @@ class SheetAnalyser(object):
             self.rtquic1.set_time_baseline_to_max()
             self.rtquic1.set_gradient()      
     def get_result(self):
-        return (self.rtquic1.get_row_label(),
-                self.rtquic1.get_row_max(),
-                self.rtquic1.get_time_to_max(),
-                self.rtquic1.getLag(),
-                self.rtquic1.get_gradient(),
-                self.rtquic1.is_positive())       
+        return  self.rtquic1.get_row_label(), self.rtquic1.get_row_max(), self.rtquic1.get_time_to_max,
+        self.rtquic1.getLag(),self.rtquic1.get_gradient(), self.rtquic1.is_positive()       
     def set_result_list(self, column_start, row):
         print("row number sent to set result list "+str(row)+" from "+ str(self.rtquic1))
         self.result_list = []
@@ -125,7 +119,7 @@ class SheetAnalyser(object):
                 self.set_result_list(column_start, row)
             except ValueError:
                 self.save_wb()
-                print("had to stop, but file still saved")
+                print("had to stop, but file " +self.raw_data + "still saved")
             self.row_filler()
         self.save_wb()
 
