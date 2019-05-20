@@ -54,7 +54,6 @@ class RTQuicSheet(object):
     def _str_(self):
         return "Workbook: ",self.excel_workbook_name, "Sheet: ", self.sheet_name
 
-
     """
     reads a selected row (up to 1000 cells) from a sheet file object and returns a list of what's in it.
     column_start refers the column number i.e. A = 1, B = 2 etc where you want to start
