@@ -34,8 +34,8 @@ class SheetAnalyser(object):
             print("Could not generate active worksheet within distination workbook for " + self.raw_data)        
     def set_analysis_num(self, num):
         self.analysis_num = num
-    def set_sheet_baseline(self):
-        self.rtquic1.set_column_list(column_origin,row_origin)
+    def set_sheet_baseline(self, column, row_start):
+        self.rtquic1.set_column_list(column, row_start)
         if len(self.rtquic1.get_column_list()) > 0:
             self.rtquic1.setBaseMean()
             self.rtquic1.setBaseSTDEV()
@@ -113,7 +113,7 @@ class SheetAnalyser(object):
         return ("Analysis_of_File"+ str(self.analysis_num))
     def analyse(self, first_row, last_row, column_start): #first and last row in source file
         self.data_label_row_filler()
-        self.set_sheet_baseline()
+        self.set_sheet_baseline(column_start+1, first_row)
         for row in range(first_row, last_row + 1,):
             try:
                 self.set_result_list(column_start, row)
@@ -157,7 +157,7 @@ class SheetAnalyserMeans(SheetAnalyser):
                             result]
     def analyse(self, first_row, last_row, column_start): #first and last row in source file
         self.data_label_row_filler()
-        self.set_sheet_baseline()
+        self.set_sheet_baseline(column_start+1, first_row)
         for row in range(first_row, last_row + 1, 2):
             try:
                 self.set_result_list(column_start, row)
