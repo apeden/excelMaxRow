@@ -7,7 +7,7 @@ class Error(Exception):
 class FileNotSavedError(Error):
     pass
 
-PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
+PATH_TO_FILES = "C:\\Users\\user\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
 list_of_files = (listdir(PATH_TO_FILES))
 
 """Analyses data in an excel file row by row
@@ -54,36 +54,21 @@ class SheetAnalyser(object):
             self.rtquic1.set_time_baseline_to_max()
             self.rtquic1.set_gradient()      
     def get_result(self):
-        return  self.rtquic1.get_row_label(), self.rtquic1.get_row_max(),
-self.rtquic1.get_time_to_max, self.rtquic1.getLag(),
-self.rtquic1.get_gradient(), self.rtquic1.is_positive()       
-    def set_result_list(self, column_start, row):
-        print("row number sent to set result list "+str(row)+" from "+ str(self.rtquic1))
-        self.result_list = []
-        self.row_num += 1
-        self.set_result(column_start, row)
-        Label = self.rtquic1.get_row_label()
-        maxVal = self.rtquic1.get_row_max()
-        maxHours = self.rtquic1.hours(self.rtquic1.get_time_to_max())
-        lagHours = self.rtquic1.hours(self.rtquic1.getLag())
-        gradient = self.rtquic1.get_gradient()
-        result = ""
-        if self.rtquic1.is_positive():
-            result = "Positive --yeah!"
-        else:
-            result = "Negative"
-        self.result_list = [Label,
-                            maxVal,
-                            maxHours,
-                            lagHours,
-                            gradient,
-                            result]
+        return  (self.rtquic1.get_row_label(),
+                self.rtquic1.get_row_max(),
+                self.rtquic1.get_time_to_max(),
+                self.rtquic1.getLag(),
+                self.rtquic1.get_gradient(),
+                self.rtquic1.is_positive())    
     def row_filler(self):
+        self.row_num += 1
+        results = self.get_result()
+        print("Results are ",results)
         try:
-            for i in range(len(self.result_list)):
+            for i in range(len(results)):
                 self.ws.cell(row = self.row_num,
                         column = i + 1,
-                        value = self.result_list[i])
+                        value = results[i])
         except:
             print("Could not fill a row")
     def data_label_row_filler(self):
@@ -116,7 +101,7 @@ self.rtquic1.get_gradient(), self.rtquic1.is_positive()
         self.set_sheet_baseline(column_start+1, first_row)
         for row in range(first_row, last_row + 1,):
             try:
-                self.set_result_list(column_start, row)
+                self.set_result(column_start, row)
             except ValueError:
                 self.save_wb()
                 print("had to stop, but file " +self.raw_data + "still saved")
