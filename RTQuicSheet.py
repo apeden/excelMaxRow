@@ -186,8 +186,12 @@ class RTQuicSheet(object):
         return self.time_baseline_to_max
 
     def set_gradient(self):
+        print ("self.row_max is ",str(self.row_max))
+        print ("self.baseline is ", str(self.baseline))
+        print ("self.time_baseline_to_max is ", str(self.time_baseline_to_max))
         if self.time_baseline_to_max > 0:
             self.gradient = (self.row_max - self.baseline)/self.time_baseline_to_max
+            print ("gradient is ", str(self.gradient))
 
     def get_gradient(self):
         return self.gradient

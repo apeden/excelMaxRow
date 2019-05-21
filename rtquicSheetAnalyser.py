@@ -4,7 +4,6 @@ from RTQuicSheet import *
 
 class Error(Exception):
     pass
-
 class FileNotSavedError(Error):
     pass
 
@@ -55,8 +54,9 @@ class SheetAnalyser(object):
             self.rtquic1.set_time_baseline_to_max()
             self.rtquic1.set_gradient()      
     def get_result(self):
-        return  self.rtquic1.get_row_label(), self.rtquic1.get_row_max(), self.rtquic1.get_time_to_max,
-        self.rtquic1.getLag(),self.rtquic1.get_gradient(), self.rtquic1.is_positive()       
+        return  self.rtquic1.get_row_label(), self.rtquic1.get_row_max(),
+self.rtquic1.get_time_to_max, self.rtquic1.getLag(),
+self.rtquic1.get_gradient(), self.rtquic1.is_positive()       
     def set_result_list(self, column_start, row):
         print("row number sent to set result list "+str(row)+" from "+ str(self.rtquic1))
         self.result_list = []
@@ -92,7 +92,7 @@ class SheetAnalyser(object):
                        "Time to Max",
                        "Lag time",
                        "Gradient",
-                       "Result"] 
+                       "Positive"] 
         self.ws.cell(row =1, column =1, value = self.raw_data)
         try:
             for i in range(len(data_labels)):
