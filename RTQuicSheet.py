@@ -127,7 +127,7 @@ class RTQuicSheet(object):
     def getThreshold(self):
         return self.threshold
     def setLag(self):
-        self.lag = 0
+        self.lag = 360000
         for i in range(len(self.row_list)-2):
             if (self.row_list[i] > self.threshold and
                 self.row_list[i+1] > self.threshold and
