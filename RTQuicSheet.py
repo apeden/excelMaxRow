@@ -116,11 +116,6 @@ class RTQuicSheet(object):
         self.time_to_max = self.calculate_time_sec(0, self.row_list.index(self.row_max))
     def get_time_to_max(self):
         return self.time_to_max
-    """
-    reads from a row as a list of ints and/or doubles and obtains first of
-    three consecutive values that are three times above the baseline along with
-    the time to reach this value, or else returns  "no values found"
-    """
     def setThreshold(self):
         assert(type(self.row_list[2]) == int or type(self.row_list[2]) == float)
         self.threshold = self.row_list[2]*3
@@ -133,8 +128,9 @@ class RTQuicSheet(object):
                 self.row_list[i+1] > self.threshold and
                 self.row_list[i+2] > self.threshold):
                 self.lag = self.calculate_time_sec(0,i)##in seconds
-                return
-        print ("no lagtime found for row ")
+                break
+        if self.lag == 360000:
+            print ("no lagtime found for row ")
     def getLag(self):
         return self.lag
     def setBaseMean(self):

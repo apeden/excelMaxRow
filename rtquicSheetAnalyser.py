@@ -7,7 +7,7 @@ class Error(Exception):
 class FileNotSavedError(Error):
     pass
 
-PATH_TO_FILES = "C:\\Users\\user\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
+PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
 list_of_files = (listdir(PATH_TO_FILES))
 
 """Analyses data in an excel file row by row
@@ -20,7 +20,7 @@ class SheetAnalyser(object):
         self.raw_data_sheet = raw_data_sheet
         self.result_list = []
         try:
-            self.rtquic1 = RTQuicSheet(self.raw_data, self.raw_data_sheet)
+            self.rtq = RTQuicSheet(self.raw_data, self.raw_data_sheet)
         except:
             print("Could not generate RTQuicSheet object for analysing data "+ self.raw_data)
         try:
@@ -34,32 +34,32 @@ class SheetAnalyser(object):
     def set_analysis_num(self, num):
         self.analysis_num = num
     def set_sheet_baseline(self, column, row_start):
-        self.rtquic1.set_column_list(column, row_start)
-        if len(self.rtquic1.get_column_list()) > 0:
-            self.rtquic1.setBaseMean()
-            self.rtquic1.setBaseSTDEV()
-            self.rtquic1.setBaseline()
+        self.rtq.set_column_list(column, row_start)
+        if len(self.rtq.get_column_list()) > 0:
+            self.rtq.setBaseMean()
+            self.rtq.setBaseSTDEV()
+            self.rtq.setBaseline()
     def set_result(self, column_start, row):##read row left to right from start point = column_start
-        self.rtquic1.set_row_label(row)
-        self.rtquic1.set_row_list(column_start, row)
+        self.rtq.set_row_label(row)
+        self.rtq.set_row_list(column_start, row)
         #check a row_list was generated
-        if len(self.rtquic1.get_row_list()) == 0:
+        if len(self.rtq.get_row_list()) == 0:
             raise ValueError   
-        self.rtquic1.set_row_max()
-        self.rtquic1.set_time_to_max()
-        self.rtquic1.setThreshold()
-        self.rtquic1.setLag()
-        if len(self.rtquic1.get_column_list()) > 0:
-            self.rtquic1.set_time_to_baseline()
-            self.rtquic1.set_time_baseline_to_max()
-            self.rtquic1.set_gradient()      
+        self.rtq.set_row_max()
+        self.rtq.set_time_to_max()
+        self.rtq.setThreshold()
+        self.rtq.setLag()
+        if len(self.rtq.get_column_list()) > 0:
+            self.rtq.set_time_to_baseline()
+            self.rtq.set_time_baseline_to_max()
+            self.rtq.set_gradient()      
     def get_result(self):
-        return  (self.rtquic1.get_row_label(),
-                self.rtquic1.get_row_max(),
-                self.rtquic1.get_time_to_max(),
-                self.rtquic1.getLag(),
-                self.rtquic1.get_gradient(),
-                self.rtquic1.is_positive())    
+        return  (self.rtq.get_row_label(),
+                self.rtq.get_row_max(),
+                self.rtq.get_time_to_max(),
+                self.rtq.getLag(),
+                self.rtq.get_gradient(),
+                self.rtq.is_positive())    
     def row_filler(self):
         self.row_num += 1
         results = self.get_result()
@@ -115,7 +115,7 @@ class SheetAnalyserMeans(SheetAnalyser):
         self.result_list = []
         self.row_num += 1
         self.set_result(row_start, row)
-        Label = self.rtquic1.get_row_label()
+        Label = self.rtq.get_row_label()
         upper_row  = self.get_result()
         self.set_result(row_start, row+1)
         lower_row = self.get_result()
@@ -123,8 +123,8 @@ class SheetAnalyserMeans(SheetAnalyser):
         for i in range (1,len(upper_row)):
             mean_row = mean_row +(((upper_row[i]+ lower_row[i])/2),)   
         maxVal = mean_row[0]
-        maxHours = self.rtquic1.hours(mean_row[1])
-        lagHours = self.rtquic1.hours(mean_row[2])
+        maxHours = self.rtq.hours(mean_row[1])
+        lagHours = self.rtq.hours(mean_row[2])
         gradient = mean_row[3]
         result = ""
         if upper_row[5] and lower_row[5]:
@@ -162,20 +162,17 @@ class SheetAnalyserForCluster(SheetAnalyser):
         self.result_list = []
         self.row_num += 1
         self.set_result(column_start, row)
-        Label = self.rtquic1.get_row_label()
-        maxVal = self.rtquic1.get_row_max()
-        maxHours = self.rtquic1.get_time_to_max()
-        lagHours = self.rtquic1.getLag()
-        gradient = self.rtquic1.get_gradient()
+        Label = self.rtq.get_row_label()
+        maxVal = self.rtq.get_row_max()
+        maxHours = self.rtq.get_time_to_max()
+        lagHours = self.rtq.getLag()
+        gradient = self.rtq.get_gradient()
         result = ""
         self.result_list = [Label,
                             maxVal,
                             maxHours,
                             lagHours,
                             gradient]
-
-
-
 
 ##METHOD FOR ANALYSING AN INDIVIDUAL EXCEL FILE
 row_origin = 13
