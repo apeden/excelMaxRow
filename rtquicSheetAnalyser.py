@@ -14,6 +14,7 @@ list_of_files = (listdir(PATH_TO_FILES))
 Puts results in a destination excel file"""
 class SheetAnalyser(object):
     def __init__(self, raw_data, raw_data_sheet):
+        self.rowAnalyser = None
         self.analysis_num = 0
         self.row_num = 2 #row in destination excel file
         self.raw_data = raw_data
