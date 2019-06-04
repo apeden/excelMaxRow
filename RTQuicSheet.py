@@ -5,23 +5,82 @@ from openpyxl import load_workbook
 import statistics
 
 class RTQuicSheet(object):
-    def __init__(self, excel_workbook_name, sheet_name):
-        self.SECONDS_PER_CYCLE = 949
-        #clear previous workbook
+    def __init__(self, excel_workbook_name, sheet_name):   
         self.wb = None
+        self.sheet = None
         self.excel_workbook_name = excel_workbook_name
         self.sheet_name = sheet_name
-        ##set workbook as file object
         try:
+            ##set workbook as file object
             self.wb = load_workbook(self.excel_workbook_name, data_only = True)
         except IOError:
             self.wb = None
             print("Could not open file"+ self.excel_workbook_name)
-        ##get sheet as file object
         try:
-            self.sheet = self.wb[self.sheet_name]
+            self.sheet = self.wb[self.sheet_name] ##get sheet as file object
         except:
             print("Could not find sheet "+ self.sheet_name + "in source data file for " + self.excel_workbook_name)
+    def getSheet(self):
+        return self.sheet
+    def __str__(self):
+        if self.sheet != None:
+            return "For analysis of " + self.sheet_name
+        else:
+            return "No sheet object available here"
+    def _str_(self):
+        return "Workbook: ",self.excel_workbook_name, "Sheet: ", self.sheet_name
+
+class SheetBase(object):
+    def __init__(self, sheet):
+        self.sheet = sheet
+        self.baseMean = 0.0
+        self.baseSTDEV = 0.0
+        self.baseline = 0.0
+        self.column_list = []
+    """
+    reads a selected column from a sheet file object and returns a list of what's in it.
+    column_start refers the row number where you want to start reading downwards from
+    breaks when an empty cell is encountered
+    """
+    def set_column_list(self, column, row_start):
+        print("column number sent to set_column_list "+str(column))
+        val = 0
+        row = row_start
+        while True:
+            val = self.get_cell_val(row, column)
+            if not type(val) == int:
+                break
+            self.column_list = self.column_list + [val]
+            row += 1
+        print(self.column_list[0:20])
+    def get_cell_val(self, row, column):
+        try:
+            val = self.sheet.cell(row, column).value
+        except:
+            print("A problem occurred reading data from a row")
+        return val
+    def get_column_list(self):
+        return self.column_list
+    def setBaseMean(self):
+        self.baseMean = statistics.mean(self.column_list)
+    def getBaseMean(self):
+        return self.baseMean
+    def setBaseSTDEV(self):
+        self.baseSTDEV = statistics.stdev(self.column_list)
+    def getBaseSTDEV(self):
+        return self.baseSTDEV
+    def setBaseline(self):
+        self.baseline = self.baseMean + 3* self.baseSTDEV
+    def getBaseline(self):
+        return self.baseline
+    def __str__(self):
+        return "Analysis of sheet " +str(self.sheet)
+
+        
+class RowAnalyser(SheetBase):
+    def __init__(self, sheet):
+        SheetBase().__init__(self, sheet)
+        self.SECONDS_PER_CYCLE = 949
         self.row_label = ""
         self.row_list = []
         self.column_list = []
@@ -29,9 +88,6 @@ class RTQuicSheet(object):
         self.time_to_max = None ##will be in seconds
         self.threshold = None ##will be flourescence units
         self.lag = None ##will be in seconds
-        self.baseMean = 0.0
-        self.baseSTDEV = 0.0
-        self.baseline = 0.0
         self.time_to_baseline = None ##will be in seconds
         self.time_baseline_to_max = None ##will be in seconds
         self.gradient = 0.0 ## fluoresecent units/sec
@@ -45,14 +101,6 @@ class RTQuicSheet(object):
         self.row_label = val
     def get_row_label(self):
         return self.row_label
-    def get_cell_val(self, row, column):
-        try:
-            val = self.sheet.cell(row, column).value
-        except:
-            print("A problem occurred reading data from a row")
-        return val
-    def _str_(self):
-        return "Workbook: ",self.excel_workbook_name, "Sheet: ", self.sheet_name
     """
     reads a selected row (up to 1000 cells) from a sheet file object and returns a list of what's in it.
     column_start refers the column number i.e. A = 1, B = 2 etc where you want to start
@@ -70,25 +118,6 @@ class RTQuicSheet(object):
         print(self.row_list[0:20])
     def get_row_list(self):
         return self.row_list
-    """
-    reads a selected column from a sheet file object and returns a list of what's in it.
-    column_start refers the row number where you want to start reading downwards from
-    breaks when an empty cell is encountered
-    """
-    def set_column_list(self, column, row_start):
-        print("column number sent to set_column_list "+str(column))
-        self.column_list = []
-        val = 0
-        row = row_start
-        while True:
-            val = self.get_cell_val(row, column)
-            if not type(val) == int:
-                break
-            self.column_list = self.column_list + [val]
-            row += 1
-        print(self.column_list[0:20])
-    def get_column_list(self):
-        return self.column_list
     """
     reads from a row as a list of ints and/or floats and obtains maximum value
     and time (in hours) when max value occurred
@@ -133,18 +162,6 @@ class RTQuicSheet(object):
             print ("no lagtime found for row ")
     def getLag(self):
         return self.lag
-    def setBaseMean(self):
-        self.baseMean = statistics.mean(self.column_list)
-    def getBaseMean(self):
-        return self.baseMean
-    def setBaseSTDEV(self):
-        self.baseSTDEV = statistics.stdev(self.column_list)
-    def getBaseSTDEV(self):
-        return self.baseSTDEV
-    def setBaseline(self):
-        self.baseline = self.baseMean + 3* self.baseSTDEV
-    def getBaseline(self):
-        return self.baseline
     def set_time_to_baseline(self):
         self.time_to_baseline = 0
         for i in range(len(self.row_list)):
@@ -173,5 +190,3 @@ class RTQuicSheet(object):
         hours = str(time_sec//3600)
         minutes = str(time_sec%3600//60)
         return hours +" hours: "+ minutes + " minutes"
-    def __str__(self):
-        return "Workbook: "+ self.excel_workbook_name + " Sheet: " + self.sheet_name
