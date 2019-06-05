@@ -24,12 +24,42 @@ class RTQuicSheet(object):
         return self.sheet
     def __str__(self):
         if self.sheet != None:
-            return "For analysis of " + self.sheet_name
+            return self.sheet_name
         else:
-            return "No sheet object available here"
-    def _str_(self):
-        return "Workbook: ",self.excel_workbook_name, "Sheet: ", self.sheet_name
+            return "No sheet object available"
 
+class RTQuICData(object):
+    def __init__(self, sheet, start_row, start_col, label_col = None,
+                 sec_per_cyc = 949, max_hours = 100, numRows = 8):
+        self.start_row = start_row
+        self.start_col = start_col
+        self.max_hours = max_hours
+        self.numCycles = max_hours*60*60//sec_per_cycle
+        self.numRows = 8
+        self.data = [[] for i in range(self.numRows)]
+        self.labels = []
+        if label_col == None:
+            for row in 'A','B','C','D','E','F','G','H':
+                for column in range(1,13)
+                    self.labels.append(row+str(column))
+        else:
+            for row in range(start_row, (self.numRows*12) + 1)
+                val = self.sheet.cell(row, label_col)
+                self.labels.append(val)
+    def setData(self):
+        for row in range(self.start_row, self.numRows + 1):
+            for column in range(self.start_col, self.numCycles + 1)
+                val = self.sheet.cell(row, column)
+                if not type(val) == int:
+                    break
+                self.data[row].append(val)
+    def getData(self):
+        return self.data
+    def setNumCycles(self, numCycles):
+        self.numCycles = numCycles
+    def getNumCycles
+        return self.numCycles
+        
 class SheetBase(object):
     def __init__(self, sheet):
         self.sheet = sheet
