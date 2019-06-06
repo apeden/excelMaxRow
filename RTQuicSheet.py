@@ -30,13 +30,13 @@ class RTQuicSheet(object):
 
 class RTQuICData(object):
     def __init__(self, sheet, start_row, start_col, label_col = None,
-                 sec_per_cyc = 949, max_hours = 100, numRows = 8):
+                 sec_per_cyc = 949, max_hours = 100, numRows = 96):
         self.sheet = sheet    
         self.start_row = start_row
         self.start_col = start_col
         self.max_hours = max_hours
         self.numCycles = max_hours*60*60//sec_per_cyc
-        self.numRows = 8
+        self.numRows = numRows
         self.data = [[] for i in range(self.numRows)]
         self.labels = []
         self.setData()
@@ -46,7 +46,7 @@ class RTQuICData(object):
                 for column in range(1,13):
                     self.labels.append(row+str(column))
         else:
-            for row in range(start_row, (self.numRows*12) + 1):
+            for row in range(start_row, start_row + self.numRows):
                 val = self.sheet.cell(row, label_col).value
                 self.labels.append(val)
     def getLabels(self):
@@ -71,7 +71,7 @@ class RTQuICData(object):
     def getNumCycles(self):
         return self.numCycles
     def __str__(self):
-        readout = "Data "
+        readout = "Data\n"
         for i in range(self.numRows):
             readout += self.labels[i] + ":"
             for j in range(2):
