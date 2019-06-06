@@ -15,18 +15,18 @@ class RTQuicSheet(object):
             self.wb = load_workbook(self.workbook_filepath, data_only = True)
         except IOError:
             self.wb = None
-            print("Could not open file"+ self.workbook_filepath)
+            print("Could not load: "+ self.workbook_filepath)
         try:
             self.sheet = self.wb[self.sheet_name] ##get sheet as file object
         except:
-            print("Could not find sheet "+ self.sheet_name + "in source data file for " + self.workbook_filepath)
+            print("Sheet not found "+ self.sheet_name + "in workbook " + self.workbook_filepath)
     def getSheet(self):
         return self.sheet
     def __str__(self):
         if self.sheet != None:
-            return self.sheet_name
+            return "Contains: "+ self.workbook_path + ", " + self.sheet_name
         else:
-            return "No sheet object available"
+            return "Empty"
 
 class RTQuICData(object):
     def __init__(self, sheet, start_row, start_col, label_col = None,
