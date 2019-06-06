@@ -31,34 +31,53 @@ class RTQuicSheet(object):
 class RTQuICData(object):
     def __init__(self, sheet, start_row, start_col, label_col = None,
                  sec_per_cyc = 949, max_hours = 100, numRows = 8):
+        self.sheet = sheet    
         self.start_row = start_row
         self.start_col = start_col
         self.max_hours = max_hours
-        self.numCycles = max_hours*60*60//sec_per_cycle
+        self.numCycles = max_hours*60*60//sec_per_cyc
         self.numRows = 8
         self.data = [[] for i in range(self.numRows)]
         self.labels = []
+        self.setData()
+        ##print("sheet is "+ str(self.sheet.cell(1, 1).value))
         if label_col == None:
             for row in 'A','B','C','D','E','F','G','H':
-                for column in range(1,13)
+                for column in range(1,13):
                     self.labels.append(row+str(column))
         else:
-            for row in range(start_row, (self.numRows*12) + 1)
-                val = self.sheet.cell(row, label_col)
+            for row in range(start_row, (self.numRows*12) + 1):
+                val = self.sheet.cell(row, label_col).value
                 self.labels.append(val)
+    def getLabels(self):
+        return self.labels
     def setData(self):
-        for row in range(self.start_row, self.numRows + 1):
-            for column in range(self.start_col, self.numCycles + 1)
-                val = self.sheet.cell(row, column)
+        ##print("setting data")
+        ##print("self.start_row is " + str(self.start_row))
+        ##print("self.numCycles is " + str(self.numCycles))
+        for row in range(self.numRows):
+            ##print("row loop entered")
+            for column in range(self.numCycles):
+                val = self.sheet.cell(row + self.start_row, column +self.start_col).value
+                ##print("value is " + str(val))
                 if not type(val) == int:
                     break
                 self.data[row].append(val)
+        ##print("self.data is " + str(self.data))
     def getData(self):
         return self.data
     def setNumCycles(self, numCycles):
         self.numCycles = numCycles
-    def getNumCycles
+    def getNumCycles(self):
         return self.numCycles
+    def __str__(self):
+        readout = "Data "
+        for i in range(self.numRows):
+            readout += self.labels[i] + ":"
+            for j in range(2):
+                readout += " " + str(self.data[i][j])
+            readout += " and " + str(len(self.data[i])-2) + " other values.\n"
+        return readout
         
 class SheetBase(object):
     def __init__(self, sheet):
