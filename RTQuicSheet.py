@@ -5,21 +5,21 @@ from openpyxl import load_workbook
 import statistics
 
 class RTQuicSheet(object):
-    def __init__(self, excel_workbook_name, sheet_name):   
+    def __init__(self, workbook_filepath, sheet_name):   
         self.wb = None
         self.sheet = None
-        self.excel_workbook_name = excel_workbook_name
+        self.workbook_filepath = workbook_filepath
         self.sheet_name = sheet_name
         try:
             ##set workbook as file object
-            self.wb = load_workbook(self.excel_workbook_name, data_only = True)
+            self.wb = load_workbook(self.workbook_filepath, data_only = True)
         except IOError:
             self.wb = None
-            print("Could not open file"+ self.excel_workbook_name)
+            print("Could not open file"+ self.workbook_filepath)
         try:
             self.sheet = self.wb[self.sheet_name] ##get sheet as file object
         except:
-            print("Could not find sheet "+ self.sheet_name + "in source data file for " + self.excel_workbook_name)
+            print("Could not find sheet "+ self.sheet_name + "in source data file for " + self.workbook_filepath)
     def getSheet(self):
         return self.sheet
     def __str__(self):
