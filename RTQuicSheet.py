@@ -127,7 +127,7 @@ class SheetBase(object):
 
         
 class RowAnalyser(SheetBase):
-    def __init__(self, sheet):
+    def __init__(self, row):
         SheetBase().__init__(self, sheet)
         self.SECONDS_PER_CYCLE = 949
         self.row_label = ""
