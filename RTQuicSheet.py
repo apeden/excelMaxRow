@@ -126,77 +126,48 @@ class SheetBase(object):
         return "Analysis of sheet " +str(self.sheet)
 
         
-class RowAnalyser(SheetBase):
-    def __init__(self, row):
-        SheetBase().__init__(self, sheet)
-        self.SECONDS_PER_CYCLE = 949
-        self.row_label = ""
-        self.row_list = []
-        self.column_list = []
-        self.row_max = None ##will be flourescence units
-        self.time_to_max = None ##will be in seconds
-        self.threshold = None ##will be flourescence units
-        self.lag = None ##will be in seconds
-        self.time_to_baseline = None ##will be in seconds
-        self.time_baseline_to_max = None ##will be in seconds
-        self.gradient = 0.0 ## fluoresecent units/sec
-    def getSECONDS_PER_CYCLE(self):
-        return self.SECONDS_PER_CYCLE
-    def set_row_label(self, row):
-        try:
-            val = self.sheet.cell(row, column=1).value
-        except:
-            print("A problem occurred setting the row label.")
-        self.row_label = val
-    def get_row_label(self):
-        return self.row_label
-    """
-    reads a selected row (up to 1000 cells) from a sheet file object and returns a list of what's in it.
-    column_start refers the column number i.e. A = 1, B = 2 etc where you want to start
-    reading the row (left to right).
-    breaks when an empty cell is encountered
-    """
-    def set_row_list(self, column_start, row):
-        print("row number sent to set_row_list "+str(row))
-        self.row_list = []
-        for column in range(column_start, 1000):
-            val = self.get_cell_val(row, column)
-            if val == None:
-                break
-            self.row_list = self.row_list + [val]
-        print(self.row_list[0:20])
-    def get_row_list(self):
-        return self.row_list
-    """
-    reads from a row as a list of ints and/or floats and obtains maximum value
-    and time (in hours) when max value occurred
-    """
-    def set_row_max(self):
-        print("Called self row max.")
-        print("Before call it's: " +str(self.row_max))
-        try:
-            assert(len(self.row_list) > 0)
-        except:
-            print("Row list is empty. Cannot analyse row")
-            self.row_max = None
-        for elem in self.row_list:
-            if(type(elem) == int or type(elem) == float):
-                self.row_max = max(self.row_list)
-            else:
-                print("item in row list is not a number")
-                self.row_max = None
-        print("Now it's " +str(self.row_max))
-    def get_row_max(self):
-        return self.row_max
-    def calculate_time_sec(self, start, end):
-        return (end-start)*self.SECONDS_PER_CYCLE
+class DataAnalyser(object):
+    def __init__(self, data, data_label, sec_per_cyc = 949):
+        self.sec_per_cyc = sec_per_cyc
+        self.data = data
+        self.data_label = data_label
+    def getSecPerCyc(self):
+        return self.sec_per_cyc
+    def getLabel(self):
+        return self.data_label
+    def getMean(self):
+        return statistics.mean(self.data)
+    def getStDev(self):
+        return statistics.stdev(self.column_list)
+    def __str__(self):
+        return self.data_label, self.data
+    
+
+class RowAnalyser(DataAnalyser):
+    def __init__(self, data,
+                 data_label, sec_per_cyc = 949, threshold = None):
+        Super().__init__(self, data, data_label, sec_per_cyc = 949)
+        if threshold != None:
+            self.threshold == threshold
+        self.row_max = setRowMax()
+        self.max_index = self.data.index(self.row_max)
+        self.time_to_max = self.cal_time(0, self.max_index)
+    def setRowMax(self):
+        assert(len(self.data) > 0)
+        for datum in self.data:
+            assert(type(datum) == int or type(assert) == float):
+        self.row_max = max(self.data)
+    def cal_time(self, start, end):
+        return (end-start)*self.sec_per_cyc
     def set_time_to_max(self):
-        self.time_to_max = self.calculate_time_sec(0, self.row_list.index(self.row_max))
+        max_index = self.data.index(self.row_max)
+        self.time_to_max = self.cal_time(0, max_index)
     def get_time_to_max(self):
         return self.time_to_max
-    def setThreshold(self):
-        assert(type(self.row_list[2]) == int or type(self.row_list[2]) == float)
-        self.threshold = self.row_list[2]*3
+    def setThreshold(self, base_index = 2, factor = 3):
+        base = self.data[base_index]
+        assert(type(base) == int or type(base) == float)
+        self.threshold = base*factor
     def getThreshold(self):
         return self.threshold
     def setLag(self):
