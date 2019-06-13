@@ -79,52 +79,6 @@ class RTQuICData(object):
             readout += " and " + str(len(self.data[i])-2) + " other values.\n"
         return readout
         
-class SheetBase(object):
-    def __init__(self, sheet):
-        self.sheet = sheet
-        self.baseMean = 0.0
-        self.baseSTDEV = 0.0
-        self.baseline = 0.0
-        self.column_list = []
-    """
-    reads a selected column from a sheet file object and returns a list of what's in it.
-    column_start refers the row number where you want to start reading downwards from
-    breaks when an empty cell is encountered
-    """
-    def set_column_list(self, column, row_start):
-        print("column number sent to set_column_list "+str(column))
-        val = 0
-        row = row_start
-        while True:
-            val = self.get_cell_val(row, column)
-            if not type(val) == int:
-                break
-            self.column_list = self.column_list + [val]
-            row += 1
-        print(self.column_list[0:20])
-    def get_cell_val(self, row, column):
-        try:
-            val = self.sheet.cell(row, column).value
-        except:
-            print("A problem occurred reading data from a row")
-        return val
-    def get_column_list(self):
-        return self.column_list
-    def setBaseMean(self):
-        self.baseMean = statistics.mean(self.column_list)
-    def getBaseMean(self):
-        return self.baseMean
-    def setBaseSTDEV(self):
-        self.baseSTDEV = statistics.stdev(self.column_list)
-    def getBaseSTDEV(self):
-        return self.baseSTDEV
-    def setBaseline(self):
-        self.baseline = self.baseMean + 3* self.baseSTDEV
-    def getBaseline(self):
-        return self.baseline
-    def __str__(self):
-        return "Analysis of sheet " +str(self.sheet)
-
         
 class DataAnalyser(object):
     def __init__(self, data, data_label, sec_per_cyc = 949):
