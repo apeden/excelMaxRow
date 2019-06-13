@@ -46,7 +46,6 @@ class RTQuICData(object):
         self.data = [[] for i in range(self.numRows)]
         self.labels = []
         self.setData()
-        ##print("sheet is "+ str(self.sheet.cell(1, 1).value))
         if label_col == None:
             for row in 'A','B','C','D','E','F','G','H':
                 for column in range(1,13):
@@ -54,23 +53,19 @@ class RTQuICData(object):
         else:
             for row in range(start_row, start_row + self.numRows):
                 val = self.sheet.cell(row, label_col).value
+                if not type(val) == str:
+                    val = str(val)
                 self.labels.append(val)
     def getLabels(self):
         return self.labels
     def setData(self):
-        ##print("setting data")
-        ##print("self.start_row is " + str(self.start_row))
-        ##print("self.numCycles is " + str(self.numCycles))
         for row in range(self.numRows):
-            ##print("row loop entered")
             for column in range(self.numCycles):
                 val = self.sheet.cell(row + self.start_row, column + \
                                       self.start_col).value
-                ##print("value is " + str(val))
                 if not type(val) == int:
                     break
                 self.data[row].append(val)
-        ##print("self.data is " + str(self.data))
     def getData(self):
         return self.data
     def setNumCycles(self, numCycles):
