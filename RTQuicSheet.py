@@ -137,27 +137,27 @@ class DataAnalyser(object):
         return self.data_label
     def getMean(self):
         return statistics.mean(self.data)
-    def getStDev(self):
-        return statistics.stdev(self.column_list)
+    def getStd(self):
+        return statistics.stdev(self.data)
     def __str__(self):
-        return self.data_label, self.data
+        return self.data_label, str(self.data)
     
 
 class RowAnalyser(DataAnalyser):
     def __init__(self, data,
-                 data_label, sec_per_cyc = 949, threshold = None):
+                 data_label, sec_per_cyc = 949, base):
         Super().__init__(self, data, data_label, sec_per_cyc = 949)
-        if threshold != None:
-            self.threshold == threshold
-        self.row_max = setRowMax()
-        self.max_index = self.data.index(self.row_max)
-        self.time_to_max = self.cal_time(0, self.max_index)
+        self.base = base
+        self.threshold = 0.0
+        self.row_max = 0
+        self.max_index = None
+        self.time_to_max = None
     def setRowMax(self):
         assert(len(self.data) > 0)
         for datum in self.data:
             assert(type(datum) == int or type(assert) == float):
         self.row_max = max(self.data)
-    def cal_time(self, start, end):
+    def calc_time(self, start, end):
         return (end-start)*self.sec_per_cyc
     def set_time_to_max(self):
         max_index = self.data.index(self.row_max)
@@ -173,10 +173,10 @@ class RowAnalyser(DataAnalyser):
     def setLag(self):
         self.lag = 360000
         for i in range(len(self.row_list)-2):
-            if (self.row_list[i] > self.threshold and
-                self.row_list[i+1] > self.threshold and
-                self.row_list[i+2] > self.threshold):
-                self.lag = self.calculate_time_sec(0,i)##in seconds
+            if (self.data[i] > self.threshold and
+                self.data[i+1] > self.threshold and
+                self.data[i+2] > self.threshold):
+                self.lag = self.calc_time(0,i)##in seconds
                 break
         if self.lag == 360000:
             print ("no lagtime found for row ")
@@ -184,27 +184,28 @@ class RowAnalyser(DataAnalyser):
         return self.lag
     def set_time_to_baseline(self):
         self.time_to_baseline = 0
-        for i in range(len(self.row_list)):
-            if self.row_list[i] > int(self.baseline):
-                 self.time_to_baseline = self.calculate_time_sec(0, i)
+        for i in range(len(self.data)):
+            if self.data[i] > self.base):
+                 self.time_to_baseline = self.calc_time(0, i)
                  break
     def get_time_to_baseline(self):
         return self.time_to_baseline
     def set_time_baseline_to_max(self):
-        self.time_baseline_to_max = self.time_to_max - self.time_to_baseline
+        self.time_baseline_to_max = self.time_to_max
+        - self.time_to_baseline
     def get_time_baseline_to_max(self):
         return self.time_baseline_to_max
     def set_gradient(self):
         print ("self.row_max is ",str(self.row_max))
-        print ("self.baseline is ", str(self.baseline))
+        print ("self.baseline is ", str(self.base))
         print ("self.time_baseline_to_max is ", str(self.time_baseline_to_max))
         if self.time_baseline_to_max > 0:
-            self.gradient = (self.row_max - self.baseline)/self.time_baseline_to_max
+            self.gradient = (self.row_max - self.base)/self.time_baseline_to_max
             print ("gradient is ", str(self.gradient))
     def get_gradient(self):
         return self.gradient
     def is_positive(self):
-        return (self.lag > 0 and (self.lag + (2* self.SECONDS_PER_CYCLE)) < 360000)
+        return (self.lag > 0 and (self.lag + (2* self.sec_per_cyc)) < 360000)
     "takes a time in seconds and converts to h:m format"
     def hours(self, time_sec):
         hours = str(time_sec//3600)
