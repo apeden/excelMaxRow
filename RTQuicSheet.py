@@ -1,8 +1,9 @@
-"""COLLECTION OF FUNCTIONS FOR ANALYSING RTQUIC DATA FROM EXCEL
-ALEX PEDEN, DECEMBER 2018"""
+"""COLLECTION OF CLASSES FOR ANALYSING RTQUIC DATA FROM EXCEL
+ALEX PEDEN, DECEMBER 2018
+"""
 
-from openpyxl import load_workbook
-import statistics
+from openpyxl import load_workbook as load
+import statistics as stat
 
 class RTQuicSheet(object):
     def __init__(self, workbook_filepath, sheet_name):   
@@ -12,19 +13,24 @@ class RTQuicSheet(object):
         self.sheet_name = sheet_name
         try:
             ##set workbook as file object
-            self.wb = load_workbook(self.workbook_filepath, data_only = True)
+            self.wb = load(self.workbook_filepath,
+                                    data_only = True)
         except IOError:
             self.wb = None
             print("Could not load: "+ self.workbook_filepath)
         try:
-            self.sheet = self.wb[self.sheet_name] ##get sheet as file object
+            ##get sheet as file object
+            self.sheet = self.wb[self.sheet_name] 
         except:
-            print("Sheet not found "+ self.sheet_name + "in workbook " + self.workbook_filepath)
+            print("Sheet not found "
+                  + self.sheet_name + "in workbook "
+                  + self.workbook_filepath)
     def getSheet(self):
         return self.sheet
     def __str__(self):
         if self.sheet != None:
-            return "Contains: "+ self.workbook_path + ", " + self.sheet_name
+            return "Contains: " + self.workbook_path + ", "
+            + self.sheet_name
         else:
             return "Empty"
 
@@ -58,7 +64,8 @@ class RTQuICData(object):
         for row in range(self.numRows):
             ##print("row loop entered")
             for column in range(self.numCycles):
-                val = self.sheet.cell(row + self.start_row, column +self.start_col).value
+                val = self.sheet.cell(row + self.start_row, column + \
+                                      self.start_col).value
                 ##print("value is " + str(val))
                 if not type(val) == int:
                     break
@@ -76,40 +83,41 @@ class RTQuICData(object):
             readout += self.labels[i] + ":"
             for j in range(2):
                 readout += " " + str(self.data[i][j])
-            readout += " and " + str(len(self.data[i])-2) + " other values.\n"
+            readout += " and " + str(len(self.data[i])-2) + \
+                       " other values.\n"
         return readout
-        
         
 class DataAnalyser(object):
     def __init__(self, data, data_label, sec_per_cyc = 949):
         self.sec_per_cyc = sec_per_cyc
         self.data = data
         self.data_label = data_label
-    def getSecPerCyc(self):
-        return self.sec_per_cyc
     def getLabel(self):
         return self.data_label
     def getMean(self):
-        return statistics.mean(self.data)
+        return stat.mean(self.data)
     def getStd(self):
-        return statistics.stdev(self.data)
+        return stat.stdev(self.data)
     def __str__(self):
         return self.data_label, str(self.data)
     
-
 class RowAnalyser(DataAnalyser):
-    def __init__(self, data,
-                 data_label, sec_per_cyc = 949, base):
+    def __init__(self, data, data_label,
+                 sec_per_cyc = 949, maxLag = 360000, base = None):
         Super().__init__(self, data, data_label, sec_per_cyc = 949)
         self.base = base
         self.threshold = 0.0
         self.row_max = 0
+        self.maxLag = maxLag
+        self.lag = maxLag
         self.max_index = None
         self.time_to_max = None
+        self.time_to_base = None
+        self.time_base_to_max = None
     def setRowMax(self):
         assert(len(self.data) > 0)
         for datum in self.data:
-            assert(type(datum) == int or type(assert) == float):
+            assert(type(datum) == int or type(datum) == float)
         self.row_max = max(self.data)
     def calc_time(self, start, end):
         return (end-start)*self.sec_per_cyc
@@ -125,42 +133,46 @@ class RowAnalyser(DataAnalyser):
     def getThreshold(self):
         return self.threshold
     def setLag(self):
-        self.lag = 360000
         for i in range(len(self.row_list)-2):
             if (self.data[i] > self.threshold and
                 self.data[i+1] > self.threshold and
                 self.data[i+2] > self.threshold):
                 self.lag = self.calc_time(0,i)##in seconds
                 break
-        if self.lag == 360000:
+        if self.lag == self.maxLag:
             print ("no lagtime found for row ")
     def getLag(self):
         return self.lag
     def set_time_to_baseline(self):
-        self.time_to_baseline = 0
         for i in range(len(self.data)):
-            if self.data[i] > self.base):
-                 self.time_to_baseline = self.calc_time(0, i)
+            if self.data[i] > self.base:
+                 self.time_to_base = self.calc_time(0, i)
                  break
-    def get_time_to_baseline(self):
-        return self.time_to_baseline
-    def set_time_baseline_to_max(self):
-        self.time_baseline_to_max = self.time_to_max
-        - self.time_to_baseline
+    def get_time_to_base(self):
+        return self.time_to_base
+    def set_time_base_to_max(self):
+        self.time_base_to_max = self.time_to_max
+        - self.time_to_base
     def get_time_baseline_to_max(self):
-        return self.time_baseline_to_max
+        return self.time_base_to_max
     def set_gradient(self):
         print ("self.row_max is ",str(self.row_max))
-        print ("self.baseline is ", str(self.base))
-        print ("self.time_baseline_to_max is ", str(self.time_baseline_to_max))
-        if self.time_baseline_to_max > 0:
-            self.gradient = (self.row_max - self.base)/self.time_baseline_to_max
+        print ("self.base is ", str(self.base))
+        print ("self.time_base_to_max is ",
+               str(self.time_base_to_max))
+        if self.time_base_to_max > 0:
+            self.gradient = (self.row_max
+                             - self.base)/self.time_base_to_max
             print ("gradient is ", str(self.gradient))
     def get_gradient(self):
         return self.gradient
     def is_positive(self):
-        return (self.lag > 0 and (self.lag + (2* self.sec_per_cyc)) < 360000)
-    "takes a time in seconds and converts to h:m format"
+        if self.lag > 0 and (self.lag
+                            + (2* self.sec_per_cyc)) < self.maxLag:
+            return True
+        else:
+            return False
+    """"Takes a time in seconds and converts to h:m format."""
     def hours(self, time_sec):
         hours = str(time_sec//3600)
         minutes = str(time_sec%3600//60)
