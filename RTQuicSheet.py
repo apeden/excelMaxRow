@@ -83,7 +83,7 @@ class RTQuICData(object):
         return readout
         
 class DataAnalyser(object):
-    def __init__(self, data, data_label, sec_per_cyc = 949):
+    def __init__(self, data, data_label, sec_per_cyc = 945.6):
         self.sec_per_cyc = sec_per_cyc
         self.data = data
         self.data_label = data_label
@@ -98,7 +98,7 @@ class DataAnalyser(object):
     
 class RowAnalyser(DataAnalyser):
     def __init__(self, data, data_label,
-                 sec_per_cyc = 949, maxLag = 360000, base = None):
+                 sec_per_cyc = 945.6, maxLag = 360000, base = None):
         DataAnalyser.__init__(self, data, data_label, sec_per_cyc)
         self.base = base
         self.threshold = 0.0
@@ -117,7 +117,7 @@ class RowAnalyser(DataAnalyser):
     def getRowMax(self):
         return self.row_max
     def calc_time(self, start, end):
-        return (end-start)*self.sec_per_cyc
+        return int((end-start)*self.sec_per_cyc)
     def set_time_to_max(self):
         max_index = self.data.index(self.row_max)
         if max_index > 0:
