@@ -176,4 +176,4 @@ class RowAnalyser(DataAnalyser):
         minutes = str(time_sec%3600//60)
         if short:
             return hours.rjust(3, ' ') +":"+ minutes.rjust(2, '0')
-        return hours.rjust(3, ' ') +"h:"+ minutes.rjust(2, '0') + "min"
+        return hours.rjust(3, ' ') +"h: "+ minutes.rjust(2, '0') + "m"
