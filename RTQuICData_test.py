@@ -20,14 +20,13 @@ PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMax
 ##print(testData)
 
 ##FOR EACH ROW IN DATA, PRINT LABEL, LAG, MAXVAL AND TIME TO MAX
-file = "Experimental plan " + \
-"RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx"
-testSheet = RTQuicSheet("RTQuIC_for_analysis/"+file, "Results")
-testData = RTQuICData(testSheet.getSheet(), 13, 14, 1, numRows = 96)
+file = "Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
+testSheet = RTQuicSheet("RTQuIC Review/"+file, "Results")
+testData = RTQuICData(testSheet.getSheet(), 13, 9,  label_col = 1, numRows = 96)
 data = testData.getData()
-print(testData)
 data_labels = testData.getLabels()
-print("\nTime to Max, Max Val and Lag times\n====================")
+print("\n",12*(" "),"Max Val  Time to max  Lag times" \
+      + "\n",14*(" "),"======   =========    =====")
 for i in range(len(data)):
     label, datum = data_labels[i], data[i]
     a = RowAnalyser(datum, label)
@@ -37,11 +36,11 @@ for i in range(len(data)):
     ##set time to max
     a.set_time_to_max()
     time_to_max = a.get_time_to_max()
-    time_to_maxHours = a.hours(time_to_max)
+    time_to_maxHours = a.hours(time_to_max, short = False)
     ##set lag time
     a.setThreshold()
     a.setLag()
     lag = a.getLag()
-    laghours = a.hours(lag)
+    laghours = a.hours(lag, short = False)
     print(label.ljust(15, ' ') + str(row_max).rjust(6, ' ') + \
           "   " + str(time_to_maxHours) + "   " + str(laghours))
