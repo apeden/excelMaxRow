@@ -25,24 +25,29 @@ testSheet = RTQuicSheet("RTQuIC Review/"+file, "Results")
 testData = RTQuICData(testSheet.getSheet(), 13, 9,  label_col = 1, numRows = 96)
 data = testData.getData()
 data_labels = testData.getLabels()
-print("\n",12*(" "),"Max Val  Time to max  Lag times"\
-      + "\n",14*(" "),"======   =========    =====")
+print("Label".ljust(15, ' '),
+      "RowMax".ljust(10, ' '),
+      "Time to Max".ljust(15, ' '),
+      "Lag".ljust(15, ' '),
+      "Gradient".ljust(10, ' '))
 for i in range(len(data)):
     label, datum = data_labels[i], data[i]
     a = RowAnalyser(datum, label)
     a.setRowMax()
     row_max = a.getRowMax()
     a.set_time_to_max()
-    time_to_max = a.get_time_to_max()
-    time_to_maxHours = a.hours(time_to_max, short = False)
+    time_to_maxHours = a.hours(a.get_time_to_max(), short = False)
     a.setThreshold()
     a.setLag()
-    lag = a.getLag()
-    laghours = a.hours(lag, short = False)
+    laghours = a.hours(a.getLag(), short = False)
     a.set_time_to_threshold()
     a.set_time_threshold_to_max()
     a.set_gradient()
-    gradient = a.get_gradient()
-    print(label.ljust(15, ' ') + str(row_max).rjust(6, ' ') + \
-          "   " + str(time_to_maxHours) + "   " + str(laghours)\
-          +str(gradient))
+    gradient = (a.get_gradient())
+    if not gradient == None:
+        gradient = round(gradient, 4)
+    print(label.ljust(15, ' ')\
+          + str(row_max).ljust(10, ' ')\
+          + str(time_to_maxHours).ljust(15, ' ')\
+          + str(laghours).ljust(15, ' ')\
+          + str(gradient).ljust(10, ' '))
