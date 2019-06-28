@@ -25,22 +25,24 @@ testSheet = RTQuicSheet("RTQuIC Review/"+file, "Results")
 testData = RTQuICData(testSheet.getSheet(), 13, 9,  label_col = 1, numRows = 96)
 data = testData.getData()
 data_labels = testData.getLabels()
-print("\n",12*(" "),"Max Val  Time to max  Lag times" \
+print("\n",12*(" "),"Max Val  Time to max  Lag times"\
       + "\n",14*(" "),"======   =========    =====")
 for i in range(len(data)):
     label, datum = data_labels[i], data[i]
     a = RowAnalyser(datum, label)
-    ##set max val
     a.setRowMax()
     row_max = a.getRowMax()
-    ##set time to max
     a.set_time_to_max()
     time_to_max = a.get_time_to_max()
     time_to_maxHours = a.hours(time_to_max, short = False)
-    ##set lag time
     a.setThreshold()
     a.setLag()
     lag = a.getLag()
     laghours = a.hours(lag, short = False)
+    a.set_time_to_threshold()
+    a.set_time_threshold_to_max()
+    a.set_gradient()
+    gradient = a.get_gradient()
     print(label.ljust(15, ' ') + str(row_max).rjust(6, ' ') + \
-          "   " + str(time_to_maxHours) + "   " + str(laghours))
+          "   " + str(time_to_maxHours) + "   " + str(laghours)\
+          +str(gradient))

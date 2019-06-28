@@ -98,17 +98,17 @@ class DataAnalyser(object):
     
 class RowAnalyser(DataAnalyser):
     def __init__(self, data, data_label,
-                 sec_per_cyc = 945.6, maxLag = 360000, base = None):
+                 sec_per_cyc = 945.6, maxLag = 360000):
         DataAnalyser.__init__(self, data, data_label, sec_per_cyc)
-        self.base = base
         self.threshold = 0.0
         self.row_max = 0
         self.maxLag = maxLag
         self.lag = maxLag
         self.max_index = 0
         self.time_to_max = maxLag
-        self.time_to_base = None
-        self.time_base_to_max = None
+        self.time_to_threshold = None
+        self.time_threshold_to_max = None
+        self.gradient = None
     def setRowMax(self):
         assert(len(self.data) > 0)
         for datum in self.data:
@@ -141,28 +141,33 @@ class RowAnalyser(DataAnalyser):
             print ("no lagtime found for row ")
     def getLag(self):
         return self.lag
-    def set_time_to_baseline(self):
+    def set_time_to_threshold(self):
         for i in range(len(self.data)):
-            if self.data[i] > self.base:
-                 self.time_to_base = self.calc_time(0, i)
+            if self.data[i] > self.threshold:
+                 self.time_to_threshold = self.calc_time(0, i)
                  break
-    def get_time_to_base(self):
-        return self.time_to_base
-    def set_time_base_to_max(self):
-        self.time_base_to_max = self.time_to_max
-        - self.time_to_base
-    def get_time_baseline_to_max(self):
-        return self.time_base_to_max
+    def get_time_to_threshold(self):
+        return self.time_to_threshold
+    def set_time_threshold_to_max(self, toPrnt = False): 
+        try:
+            self.time_threshold_to_max = self.time_to_max \
+                                         - self.time_to_threshold
+        except:
+            if toPrnt: print("Could not set Threshold to max")
     def set_gradient(self, toPrnt = False):
         if toPrnt:
             print ("self.row_max is ",str(self.row_max), \
-                    "\nself.base is ", str(self.base), \
-                    "\nself.time_base_to_max is ", \
-                    str(self.time_base_to_max))
-        if self.time_base_to_max > 0:
-            self.gradient = (self.row_max
-                             - self.base)/self.time_base_to_max
-            print ("gradient is ", str(self.gradient))
+                    "\nself.threshold is ", str(self.threshold), \
+                    "\nself.time_threshold_to_max is ", \
+                    str(self.time_threshold_to_max))
+        try:
+            if self.time_threshold_to_max > 0:
+                self.gradient = (self.row_max - self.threshold)\
+                            /self.time_threshold_to_max
+            if toPrnt:
+                print ("gradient is ", str(self.gradient))
+        except:
+            if toPrnt: print("could not set gradient")
     def get_gradient(self):
         return self.gradient
     def is_positive(self):

@@ -16,8 +16,14 @@ class ExtractData(object):
         pass ###return self.FileName and data as previously coded for
                                     
 class AnalyseData(object): ##performed on a row
-    def __init__(self, data_row, base):
+    def __init__(self, data):
         pass                       
+    def getMean(self, range = (0, len(self.data)):
+        pass
+
+class AnalyseRow(AnalyseData):
+    def __init__(self, data, base):
+        AnalyseData.__init__(self, data)            
     def getMaxVal(self):
         pass
     def getLagTime(self, factor = 3, SD = False, units = secs):
