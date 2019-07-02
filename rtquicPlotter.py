@@ -1,36 +1,32 @@
 import pylab
-from os import listdir
 from RTQuicSheet import *
-
-PATH_TO_FILES = "C:\\Users\\apeden\\OneDrive - University of Edinburgh\\excelMaxRow\\RTQuIC_for_analysis"
-list_of_files = (listdir(PATH_TO_FILES))
-
-
 
 
 """takes a list of fluorescence values and adds to plot of
 line graphs. x axis: 0 to 100 hours, y axis 0 to
 260000 F Units"""
 
-rows = (16,17,18,19)
+def plotRTQuIC(file):
+    x_values, y_values  = [],[]
+    testSheet = RTQuicSheet("RTQuIC Review/"+file, "Results")
+    testData = RTQuICData(testSheet.getSheet(), 13, 9,
+                      label_col = 1, numRows = 96)
+    plateData = testData.getData()
+    for i in range(len(plateData)):
+        label, row_data = data_labels[i], data[i]
+        a = RowAnalyser(row_data, label)
+        cycle_time = testData.getSecPerCyc()/3600 # in hour
+        for i in range(len(row_data)):
+            time_hours = (i+1)*cycle_time
+            x_values.append(time_hours)
+            y_values.append(row_data[i])
+            pylab.plot(x_values, y_values, label = str(row))
+        pylab.title('RT-QuIC Fluorescence trace')
+        pylab.xlabel('Hours')
+        pylab.ylabel('Flourescence Units')
+        pylab.legend()
+        pylab.show()
 
-def plot_rtquic(rows):
-    x_values = []
-    t = RTQuicSheet(PATH_TO_FILES+"\\"+list_of_files[0], "Results")
-    t.set_row_list(14,rows[0])
-    first_row = t.get_row_list()
-    for i in range(1, len(first_row)+1):
-        x_values.append((i*t.getSECONDS_PER_CYCLE())/3600)
-    for row in rows:
-        t.set_row_list(14,row)
-        y_values = t.get_row_list()
-        pylab.plot(x_values, y_values, label = str(row))
-    pylab.title('RT-QuIC Fluorescence trace')
-    pylab.xlabel('Hours')
-    pylab.ylabel('Flourescence Units')
-    pylab.legend()
-    pylab.show()
-
-plot_rtquic(rows)
+plotRTQuIC("Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx")
 
 

@@ -41,6 +41,7 @@ class RTQuICData(object):
         self.start_row = start_row
         self.start_col = start_col
         self.max_hours = max_hours
+        self.sec_per_cyc = sec_per_cyc
         self.numCycles = max_hours*60*60//sec_per_cyc
         self.numRows = numRows
         self.data = [[] for i in range(self.numRows)]
@@ -56,6 +57,8 @@ class RTQuICData(object):
                 if not type(val) == str:
                     val = str(val)
                 self.labels.append(val)
+    def getSecPerCyc():
+        return self.sec_per_cyc
     def getLabels(self):
         return self.labels
     def setData(self):
