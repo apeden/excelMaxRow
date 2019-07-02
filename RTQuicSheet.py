@@ -170,6 +170,14 @@ class RowAnalyser(DataAnalyser):
             if toPrnt: print("could not set gradient")
     def get_gradient(self):
         return self.gradient
+    def setAUC(self, base_index = 2):
+        total, self.AUC = 0, 0  
+        for datum in self.data:
+            if datum - self.data[base_index] > 0:
+                total += datum
+        self.AUC = total/400
+    def getAUC(self):
+        return self.AUC
     def is_positive(self):
         if self.lag > 0 and (self.lag
                             + (2* self.sec_per_cyc)) < self.maxLag:
