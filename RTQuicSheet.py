@@ -176,8 +176,9 @@ class RowAnalyser(DataAnalyser):
     def setAUC(self, base_index = 2):
         total, self.AUC = 0, 0  
         for datum in self.data:
-            if datum - self.data[base_index] > 0:
-                total += datum
+            aboveBase = datum - self.data[base_index]
+            if aboveBase > 0:
+                total += aboveBase
         self.AUC = total/400
     def getAUC(self):
         return self.AUC

@@ -30,14 +30,14 @@ title= 'RT-QuIC Fluorescence trace'
 xlabel='Hours'
 ylabel='Flourescence Units'
 
-def plotRange(file, start_row, end_row, title, xlabel, ylabel):
+def plotRange(file, rowRange, title, xlabel, ylabel):
     x_values, y_values  = [],[]
     plateData, data_labels, cycle_time\
                = getResults(file)
     for i in range(len(plateData[0])):
         time_hours = (i+1)*cycle_time
         x_values.append(time_hours)    
-    for i in range(start_row, end_row):
+    for i in rowRange:
         label, row_data = data_labels[i], plateData[i]   
         y_values = row_data
         plt.plot(x_values, y_values, label = str(label))
@@ -62,6 +62,6 @@ def plotOne(file, row, title, xlabel, ylabel, base = False):
 
 
 file = "Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
-plotRange(file, 0, 8, title, xlabel, ylabel)
+plotRange(file, (6,14,20, 43), title, xlabel, ylabel)
 #plotOne(file, 1, title, xlabel, ylabel, True)
 

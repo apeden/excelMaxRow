@@ -26,7 +26,8 @@ testData = RTQuICData(testSheet.getSheet(), 13, 9,
                       label_col = 1, numRows = 96)
 data = testData.getData()
 data_labels = testData.getLabels()
-print("Label".ljust(14, ' '),
+print("Row".ljust(3, ' '),
+      "Label".ljust(14, ' '),
       "RowMax".ljust(9, ' '),
       "Time to Max".ljust(14, ' '),
       "Lag".ljust(14, ' '),
@@ -51,7 +52,8 @@ for i in range(len(data)):
     gradient = a.get_gradient()
     if not gradient == None:
         gradient = round(gradient, 4)
-    print(label.ljust(15, ' ')\
+    print(str(i).ljust(4, ' ')\
+          + label.ljust(15, ' ')\
           + str(row_max).ljust(10, ' ')\
           + str(time_to_maxHours).ljust(15, ' ')\
           + str(laghours).ljust(15, ' ')\
