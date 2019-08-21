@@ -1,4 +1,4 @@
-from openpyxl import Workbook
+from openpyxl import Workbook  #is this necessary, imported in the RTQuICSheet module?
 from os import listdir
 from RTQuicSheet import *
 

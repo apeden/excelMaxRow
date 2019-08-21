@@ -26,24 +26,37 @@ file = "RTQuIC Review/Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 4
 
 
 class DataExpresser(object):
-    def __init__(self, file, startRow, startCol):
+    def __init__(self, file, startRow, startCol, label_col = None):
         self.file = file
         self.startRow = startRow
         self.startCol = startCol
-    def toPrnt(self):
-        testSheet = RTQuicSheet(self.file,
-                                "Results")
-        testData = RTQuICData(testSheet.getSheet(), self.startRow, self.startCol,
-                      label_col = 1, numRows = 96)
+        self.label_col = label_col
+        self.features = []
+    def setFeatures(self, toPrnt = True):
+        """Perform line by line analysis of data.
+        Calculate features and create dict of features for each line
+        Add dict to a list of dicts (self.features)
+        Optional: print to screen.
+
+        Return nothing
+        """
+        testSheet = RTQuicSheet(self.file,"Results")
+        testData = RTQuICData(testSheet.getSheet(),
+                              self.startRow,
+                              self.startCol,
+                              self.label_col,
+                              numRows = 96)
         data = testData.getData()
         data_labels = testData.getLabels()
-        print("Row".ljust(3, ' '),
-              "Label".ljust(14, ' '),
-              "RowMax".ljust(9, ' '),
-              "Time to Max".ljust(14, ' '),
-              "Lag".ljust(14, ' '),
-              "Gradient".ljust(9, ' '),
-              "Area under curve".ljust(19, ' '))
+        
+        if toPrnt:
+            print("Row".ljust(3, ' '),
+                  "Label".ljust(14, ' '),
+                  "RowMax".ljust(9, ' '),
+                  "Time to Max".ljust(14, ' '),
+                  "Lag".ljust(14, ' '),
+                  "Gradient".ljust(9, ' '),
+                  "Area under curve".ljust(19, ' '))
         for i in range(len(data)):
             label, datum = data_labels[i], data[i]
             a = RowAnalyser(datum, label)
@@ -63,13 +76,26 @@ class DataExpresser(object):
             gradient = a.get_gradient()
             if not gradient == None:
                 gradient = round(gradient, 4)
-            print(str(i).ljust(4, ' ')\
-                  + label.ljust(15, ' ')\
-                  + str(row_max).ljust(10, ' ')\
-                  + str(time_to_maxHours).ljust(15, ' ')\
-                  + str(laghours).ljust(15, ' ')\
-                  + str(gradient).ljust(10, ' ')\
-                  + str(round(AUC)).ljust(20, ' '))
+            self.features.append(
+                {"Label":data_labels[i],
+                 "RowMax":row_max,
+                 "Time to Max":a.get_time_to_max(),
+                 "Lag":a.getLag(),
+                 "Gradient":gradient,
+                 "Area under curve":AUC})
+            if toPrnt:
+                print(str(i).ljust(4, ' ')\
+                      + label.ljust(15, ' ')\
+                      + str(row_max).ljust(10, ' ')\
+                      + str(time_to_maxHours).ljust(15, ' ')\
+                      + str(laghours).ljust(15, ' ')\
+                      + str(gradient).ljust(10, ' ')\
+                      + str(round(AUC)).ljust(20, ' '))
+    def getFeatures(self):
+        return self.features
 
-d =  DataExpresser(file, 13, 9)
-d.toPrnt()
+d =  DataExpresser(file, 13, 9, 1)
+
+
+d.setFeatures()
+print(d.getFeatures())

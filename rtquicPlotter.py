@@ -62,6 +62,6 @@ def plotOne(file, row, title, xlabel, ylabel, base = False):
 
 
 file = "Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
-plotRange(file, (6,14,20, 43), title, xlabel, ylabel)
-#plotOne(file, 1, title, xlabel, ylabel, True)
+#plotRange(file, (6,14,20, 43), title, xlabel, ylabel)
+plotOne(file, 1, title, xlabel, ylabel, True)
 
