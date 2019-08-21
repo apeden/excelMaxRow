@@ -20,14 +20,20 @@ from RTQuicSheet import RTQuicSheet, RTQuICData, RowAnalyser
 
 ##FOR EACH ROW IN DATA, PRINT LABEL, LAG, MAXVAL AND TIME TO MAX
 
-file = "Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
+file = "RTQuIC Review/Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
+
+
+
+
 class DataExpresser(object):
-    def __init__(self, file)
-        self.files = file
+    def __init__(self, file, startRow, startCol):
+        self.file = file
+        self.startRow = startRow
+        self.startCol = startCol
     def toPrnt(self):
-        testSheet = RTQuicSheet("RTQuIC Review/"+self.file,
+        testSheet = RTQuicSheet(self.file,
                                 "Results")
-        testData = RTQuICData(testSheet.getSheet(), 13, 9,
+        testData = RTQuICData(testSheet.getSheet(), self.startRow, self.startCol,
                       label_col = 1, numRows = 96)
         data = testData.getData()
         data_labels = testData.getLabels()
@@ -64,3 +70,6 @@ class DataExpresser(object):
                   + str(laghours).ljust(15, ' ')\
                   + str(gradient).ljust(10, ' ')\
                   + str(round(AUC)).ljust(20, ' '))
+
+d =  DataExpresser(file, 13, 9)
+d.toPrnt()
