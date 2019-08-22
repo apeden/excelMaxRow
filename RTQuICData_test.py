@@ -20,11 +20,6 @@ from RTQuicSheet import RTQuicSheet, RTQuICData, RowAnalyser
 
 ##FOR EACH ROW IN DATA, PRINT LABEL, LAG, MAXVAL AND TIME TO MAX
 
-file = "RTQuIC Review/Experimental plan RTQUIC19 004 AHP 65+study cases  37 38 40 39 41 42 01 02.xlsx"
-
-
-
-
 class DataExpresser(object):
     def __init__(self, file, startRow, startCol, label_col = None):
         self.file = file
@@ -40,7 +35,7 @@ class DataExpresser(object):
 
         Return nothing
         """
-        testSheet = RTQuicSheet(self.file,"Results")
+        testSheet = RTQuicSheet(self.file,"All Cycles")
         testData = RTQuICData(testSheet.getSheet(),
                               self.startRow,
                               self.startCol,
@@ -82,20 +77,42 @@ class DataExpresser(object):
                  "Time to Max":a.get_time_to_max(),
                  "Lag":a.getLag(),
                  "Gradient":gradient,
-                 "Area under curve":AUC})
-            if toPrnt:
-                print(str(i).ljust(4, ' ')\
-                      + label.ljust(15, ' ')\
-                      + str(row_max).ljust(10, ' ')\
-                      + str(time_to_maxHours).ljust(15, ' ')\
-                      + str(laghours).ljust(15, ' ')\
-                      + str(gradient).ljust(10, ' ')\
-                      + str(round(AUC)).ljust(20, ' '))
+                 "Area under curve":AUC,
+                 "Positive?":a.is_positive()}
+                 )
+            print(str(i).ljust(4, ' ')\
+                  + label.ljust(15, ' ')\
+                  + str(row_max).ljust(10, ' ')\
+                  + str(time_to_maxHours).ljust(15, ' ')\
+                  + str(laghours).ljust(15, ' ')\
+                  + str(gradient).ljust(10, ' ')\
+                  + str(round(AUC)).ljust(20, ' ')
+                  + str(a.is_positive()).ljust(20, ' '))
+    def setRepPos(self):
+        for i in range(0,len(self.features),2):
+            if self.features[i]["Positive?"] \
+               and self.features[i+1]["Positive?"]:
+                self.features[i]["RepPositive?"] = True
+                self.features[i+1]["RepPositive?"] = True
+            else:
+                self.features[i]["RepPositive?"] = False
+                self.features[i+1]["RepPositive?"] = False
     def getFeatures(self):
         return self.features
-
-d =  DataExpresser(file, 13, 9, 1)
-
-
+    def reportRepPos(self):
+        print("The following wells were repeat positive")
+        for featDict in self.features:
+            if featDict["RepPositive?"]:
+                print(featDict["Label"]
+                      +": lag time: "
+                      +str(featDict["Lag"])
+                      +": max val: "
+                      +str(featDict["RowMax"]))
+                      
+file = "RTQuIC_for_analysis/RT-QUIC_READ_19_009.xlsx"
+d =  DataExpresser(file, 13, 4)
 d.setFeatures()
-print(d.getFeatures())
+d.setRepPos()
+d.reportRepPos()
+
+

@@ -23,7 +23,7 @@ class RTQuicSheet(object):
             self.sheet = self.wb[self.sheet_name] 
         except:
             print("Sheet not found "
-                  + self.sheet_name + "in workbook "
+                  + self.sheet_name + " in workbook "
                   + self.workbook_filepath)
     def getSheet(self):
         return self.sheet
@@ -112,6 +112,7 @@ class RowAnalyser(DataAnalyser):
         self.time_to_threshold = None
         self.time_threshold_to_max = None
         self.gradient = None
+        self.isRepPos = None
     def setRowMax(self):
         assert(len(self.data) > 0)
         for datum in self.data:
@@ -194,3 +195,5 @@ class RowAnalyser(DataAnalyser):
         if short:
             return hours.rjust(3, ' ') +":"+ minutes.rjust(2, '0')
         return hours.rjust(3, ' ') +"h: "+ minutes.rjust(2, '0') + "m"
+    def isRepPos(self):
+        return True
