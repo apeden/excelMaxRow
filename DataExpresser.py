@@ -112,10 +112,6 @@ class DataExpresser(object):
                       +": max val: "
                       +str(featDict["RowMax"]))
                       
-file = "RTQuIC_for_analysis/RT-QUIC_READ_19_009.xlsx"
-d =  DataExpresser(file, 13, 4)
-d.setFeatures()
-d.setRepPos()
-d.reportRepPos()
+
 
 
