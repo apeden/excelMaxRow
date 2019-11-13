@@ -6,7 +6,11 @@ class RTQuICData(object):
         self.start_col = start_col
         self.max_hours = max_hours
         self.sec_per_cyc = sec_per_cyc
-        self.numCycles = int(max_hours*60*60/sec_per_cyc)
+        self.numCycles = int(max_hours*60*60/self.sec_per_cyc)
+        self.readTimes = []
+        for x in range(1,self.numCycles+1):
+            time =  round((float(x)*self.sec_per_cyc)/(60*60),2)
+            self.readTimes.append(round((float(x)*self.sec_per_cyc)/(60*60),2))
         self.numRows = numRows
         self.data = [[] for i in range(self.numRows)]
         self.labels = []
@@ -23,9 +27,12 @@ class RTQuICData(object):
                 self.labels.append(val)
     def getSecPerCyc(self):
         return self.sec_per_cyc
+    def getReadTimes(self):
+        return self.readTimes
     def getLabels(self):
         return self.labels
     def setData(self):
+        print("self.start_row is ",self.start_row)
         for row in range(self.numRows):
             for column in range(self.numCycles):
                 val = self.sheet.cell(row + self.start_row, column + \

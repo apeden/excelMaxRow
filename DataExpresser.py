@@ -1,7 +1,7 @@
 from RTQuicSheet import RTQuicSheet
 from RTQuICData import RTQuICData
 from RowAnalyser import RowAnalyser
-from DataAnalyser import DataAnalyser
+#from DataAnalyser import DataAnalyser
 
 
 ##SINGLE SHEET ANALYSIS
@@ -24,8 +24,9 @@ print(testData)
 ##FOR EACH ROW IN DATA, PRINT LABEL, LAG, MAXVAL AND TIME TO MAX
 
 class DataExpresser(object):
-    def __init__(self, file, startRow, startCol, label_col = None):
+    def __init__(self, file, sheet, startRow, startCol, label_col = None):
         self.file = file
+        self.sheet = sheet
         self.startRow = startRow
         self.startCol = startCol
         self.label_col = label_col
@@ -38,15 +39,14 @@ class DataExpresser(object):
 
         Return nothing
         """
-        testSheet = RTQuicSheet(self.file,"All Cycles")
+        testSheet = RTQuicSheet(self.file,self.sheet)
         testData = RTQuICData(testSheet.getSheet(),
                               self.startRow,
                               self.startCol,
                               self.label_col,
                               numRows = 96)
         data = testData.getData()
-        data_labels = testData.getLabels()
-        
+        data_labels = testData.getLabels()       
         if toPrnt:
             print("Row".ljust(3, ' '),
                   "Label".ljust(14, ' '),
@@ -81,7 +81,9 @@ class DataExpresser(object):
                  "Lag":a.getLag(),
                  "Gradient":gradient,
                  "Area under curve":AUC,
-                 "Positive?":a.is_positive()}
+                 "Positive?":a.is_positive(),
+                 "Data":datum}
+                
                  )
             print(str(i).ljust(4, ' ')\
                   + label.ljust(15, ' ')\
