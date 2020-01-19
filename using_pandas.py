@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 
 SEC_PER_CYCLE = 945.6
 file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
-
+files = [
+    "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx",
+    "Experimental plan RTQUIC18 022 AHP 65+study cases BATCH 15 part2 and 16.xlsx"]
+        
 def getData(file, toPrint = True):
     try:
         df = pd.read_excel("RTQuIC_for_analysis/"+file,
@@ -21,32 +24,28 @@ def getData(file, toPrint = True):
     return df
 
 def splitNumbers(dataframe, toPrint = True):
-        #select only index and first column and save as features_df
     features_df = dataframe.iloc[:,0:1]
     if toPrint: print(features_df)
-        #delete non_numeric columns that wont go to np.array
     for_array_df = dataframe.iloc[:,1:401]
-        #create numpy array
     data_array_2D = for_array_df.to_numpy()
-        #print numpy array
     if toPrint: print(data_array_2D)
-        #copy returned to avoid SettingwithCopyWarning
     return features_df.copy(), data_array_2D.copy() 
 
-
 """Methods for calculating features"""
-def maxVal(i):
+def maxVal(i, data_array_2D):
     try:
         return np.amax(data_array_2D[i])
     except:
         return np.NaN
-def timeToMax(i):
+    
+def timeToMax(i, data_array_2D):
     time_to_max = np.argmax(data_array_2D[i])*SEC_PER_CYCLE
-    if not lagTime(i) == np.NaN:
+    if not lagTime(i, data_array_2D) == np.NaN:
         return round(time_to_max/3600, 1)
     else:
         return np.NaN
-def lagTime(i):
+    
+def lagTime(i, data_array_2D):
     t = 3* data_array_2D[i][1]
     for j in range(len(data_array_2D[i])-2):        
         if (data_array_2D[i][j] > t
@@ -55,7 +54,8 @@ def lagTime(i):
             lag_time = j*SEC_PER_CYCLE
             return round(lag_time/3600, 1)
     return np.NaN
-def lagVal(i):
+
+def lagVal(i, data_array_2D):
     baseline = data_array_2D[i][1]
     t = 3* baseline
     for j in range(len(data_array_2D[i])-2):        
@@ -64,13 +64,19 @@ def lagVal(i):
             and data_array_2D[i][j+2] > t):
             return data_array_2D[i][j]
     return 0.0
-def gradient(i):
+
+def gradient(i, data_array_2D):
     try:
-        gradient = (maxVal(i)-lagVal(i))/(timeToMax(i)-lagTime(i))
+        methods = maxVal, lagVal, timeToMax, lagTime
+        results = ()
+        for method in methods:
+            results += (method(i, data_array_2D),)
+        gradient = (results[0]-results[1])/(results[2]-results[3])     
         return round(gradient, 1)
     except:
         return np.NaN
-def areaUnderCurve(i):
+    
+def areaUnderCurve(i, data_array_2D):
     baseline = data_array_2D[i][1]
     val_above_baseline = data_array_2D[i] - baseline
     area = val_above_baseline.sum()
@@ -78,7 +84,7 @@ def areaUnderCurve(i):
         return area
     else:
         return 0.0
-        
+    
 method_dict = {"Max Val": maxVal,
                "Time to Max": timeToMax,
                "Lag Time": lagTime,
@@ -86,14 +92,20 @@ method_dict = {"Max Val": maxVal,
                "Gradient": gradient,
                "AUC": areaUnderCurve}
 
-#concatenate results from multiple excel file
-
-def addColumn(method_name):
+def addColumn(method_name, features_df, data_array_2D):
     features_df[method_name] = np.NaN
     col_index = features_df.columns.get_loc(method_name)
     for i in range(0,features_df.shape[0]):
-        value = method_dict[method_name](i)
+        value = method_dict[method_name](i, data_array_2D)
         features_df.iat[i, col_index] = value
+
+def cleanDesc(df):
+    """ modify df to create correct unique descriptions
+    of the duplicate rows (assuming duplicates are used)
+    """    
+    for i in range(0, len(df)-1, 2):
+        df.iat[i,0] = df.iat[i,0] + " " +df.iat[i+1,0]
+        df.iat[i+1,0] = df.iat[i,0] + " repeat" 
 
 ##def plotTrace(i, plotGradient = True ):
 ##    hours_per_cycle = SEC_PER_CYCLE/3600
@@ -107,23 +119,27 @@ def addColumn(method_name):
 ##            plt.plot(x_vals, g(x_vals - 
 ##    plt.show()
 
-df = getData(file)
-df.columns = df.iloc[0]
-df.drop(df.index[0] , inplace = True)
-df = df[df.Description != 0]
-print(df)
+def get_features_df(file):
+    df = getData(file)
+    df.columns = df.iloc[0]
+    df.drop(df.index[0] , inplace = True)
+    df = df[df.Description != 0]
+    #print("Basic dataframe\n",df)
+    features_df, data_array_2D = splitNumbers(df)
+    for method_name in method_dict:
+        addColumn(method_name, features_df, data_array_2D)
+    #print("Dataframe of features\n",features_df)
+    cleanDesc(features_df)
+    #print("Dataframe with cleaned row names\n",features_df)
+    return features_df
 
-features_df, data_array_2D = splitNumbers(df)
-for method_name in method_dict:
-    addColumn(method_name)
-print(features_df)
+def build_master_frame(files):
+    masterframe = get_features_df(files[0])
+    for file in files[1:]:     
+        masterframe = pd.concat([masterframe, get_features_df(file)])
+    return masterframe
 
-def cleanDesc(df):
-    for i in range(0, len(df)-1, 2):
-        df.iat[i,0] = df.iat[i,0] + " " +df.iat[i+1,0]
-        df.iat[i+1,0] = df.iat[i,0] + " repeat" 
-cleanDesc(features_df)
-print(features_df)
+print(build_master_frame(files))
 
 #plotTrace(62)
     
