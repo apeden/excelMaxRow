@@ -1,33 +1,71 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+toPrint = False
 
 SEC_PER_CYCLE = 945.6
-file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
-files = [
-    "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx",
-    "Experimental plan RTQUIC18 022 AHP 65+study cases BATCH 15 part2 and 16.xlsx"]
-        
-def getData(file, toPrint = True):
-    try:
-        df = pd.read_excel("RTQuIC_for_analysis/"+file,
+#file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
+files = []
+basepath = "RTQuIC_for_analysis/"
+
+POSITIVES =(
+"38/07",
+"39/09",
+"41/08",
+"44/10",
+"48/06",
+"43/10",
+"48/11",
+"54/05",
+"56/12",
+"57/12",
+"65/13",
+"66/13",
+"67/13")
+
+POSITIVE_STANDARDS =(
+"sCJD MM1",
+"sCJD VV2")
+
+NEGATIVES = "MM","MV","VV"
+
+
+with os.scandir(basepath) as entries:
+    for entry in entries:
+        try:
+            assert(entry.is_file())
+            files.append(entry.name)
+        except:
+            print(entry.name, " is apparently a problem file.")
+    for file in files:
+        print(file)
+                
+def getData(file):
+    #try:
+    df = pd.read_excel(basepath+file,
                            sheet_name='Results',
+                           skiprows = 10,
                            usecols='A,N:OW')
-    except FileNotFoundError:
-        print("In getData, File not found")
-    except:
-        print("In getData, Couldn't make dataframe")
-    if toPrint: print("Original dataframe \n",df)
-        #delete all rows indexed with NaN
-    df.dropna(how = 'any', inplace = True)
-    if toPrint: print("Data frame with NaN dropped \n", df)
+    #except FileNotFoundError:
+        #print("In getData, File ",file," not found")
+    #except:
+        #print("In getData, Couldn't make dataframe using file ",file)
+    if toPrint: print("Original dataframe for ",file,"\n",df)
+        #delete all rows with NaN in second column
+    #df.dropna(how = "any", inplace = True)
+    if toPrint: print("Data frame for ",file," with NaN dropped \n", df)
     return df
 
-def splitNumbers(dataframe, toPrint = True):
+def splitNumbers(dataframe):
     features_df = dataframe.iloc[:,0:1]
     if toPrint: print(features_df)
     for_array_df = dataframe.iloc[:,1:401]
-    data_array_2D = for_array_df.to_numpy()
+    try:
+        data_array_2D = for_array_df.to_numpy()
+    except:
+        print("Could not extract numeric data as array")
     if toPrint: print(data_array_2D)
     return features_df.copy(), data_array_2D.copy() 
 
@@ -63,7 +101,7 @@ def lagVal(i, data_array_2D):
             and data_array_2D[i][j+1] > t
             and data_array_2D[i][j+2] > t):
             return data_array_2D[i][j]
-    return 0.0
+    return np.NaN
 
 def gradient(i, data_array_2D):
     try:
@@ -75,6 +113,7 @@ def gradient(i, data_array_2D):
         return round(gradient, 1)
     except:
         return np.NaN
+
     
 def areaUnderCurve(i, data_array_2D):
     baseline = data_array_2D[i][1]
@@ -99,13 +138,20 @@ def addColumn(method_name, features_df, data_array_2D):
         value = method_dict[method_name](i, data_array_2D)
         features_df.iat[i, col_index] = value
 
+def addFileTag(features_df, file):
+    features_df["file name"] = file
+    
 def cleanDesc(df):
     """ modify df to create correct unique descriptions
     of the duplicate rows (assuming duplicates are used)
     """    
     for i in range(0, len(df)-1, 2):
-        df.iat[i,0] = df.iat[i,0] + " " +df.iat[i+1,0]
-        df.iat[i+1,0] = df.iat[i,0] + " repeat" 
+        try:
+            if not pd.isnull(df.iat[i+1,0]):
+                df.iat[i,0] = str(df.iat[i,0]) + " " + str(df.iat[i+1,0])
+            df.iat[i+1,0] = str(df.iat[i,0]) + " repeat"
+        except:
+            print("Problem cleaning labels at index ",i)
 
 ##def plotTrace(i, plotGradient = True ):
 ##    hours_per_cycle = SEC_PER_CYCLE/3600
@@ -121,25 +167,102 @@ def cleanDesc(df):
 
 def get_features_df(file):
     df = getData(file)
-    df.columns = df.iloc[0]
-    df.drop(df.index[0] , inplace = True)
-    df = df[df.Description != 0]
-    #print("Basic dataframe\n",df)
-    features_df, data_array_2D = splitNumbers(df)
+    try:
+        df.columns = df.iloc[0]
+    except:
+        print("Couldn't set columns for ",file)
+    try:
+        df.drop(df.index[0], inplace = True)    
+        df = df[df.Description != 0]
+    except:
+        print("Problem with cleaning null or zero rows for ",file)
+    if toPrint: print("Basic dataframe for ",file,"\n",df)
+    try:
+        features_df, data_array_2D = splitNumbers(df)
+    except:
+        print("Problem with splitting row labels and numbers for ",file)
     for method_name in method_dict:
-        addColumn(method_name, features_df, data_array_2D)
-    #print("Dataframe of features\n",features_df)
-    cleanDesc(features_df)
-    #print("Dataframe with cleaned row names\n",features_df)
-    return features_df
+        try:
+            addColumn(method_name, features_df, data_array_2D)
+        except:
+            print("Problem calculating ",method_name, " for ",file)
+    try:
+        addFileTag(features_df, file)
+    except:
+        print("problem tagging filename ",file) 
+    try:
+        cleanDesc(features_df)
+        if toPrint: print(features_df)
+        return features_df
+    except:
+        print("Problem cleaning row names for ",file,"\n",features_df)
+    
 
 def build_master_frame(files):
-    masterframe = get_features_df(files[0])
+    masterframe = None
+    try:
+        masterframe = get_features_df(files[0])
+    except:
+        print("Problem building first data from ",files[0])
     for file in files[1:]:     
-        masterframe = pd.concat([masterframe, get_features_df(file)])
+        masterframe2 = None
+        #try:
+        masterframe2 = get_features_df(file)
+        #except:
+        #print("Problem building data from ",file)
+        #try:
+        masterframe = pd.concat([masterframe, masterframe2])
+        #except:
+        #print("Problem concatenating dataframe from ",file)
     return masterframe
 
-print(build_master_frame(files))
+#get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
+
+mf = build_master_frame(files)
+print(mf.index)
+mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+print(mf.index)
+
+
+###Filter out the positive reactions
+mf.dropna(subset =["Lag Time"], inplace = True)
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
+    print("Master dataframe\n========\n", mf)
+
+##from sklearn.preprocessing import MinMaxScaler
+##
+##mms = MinMaxScaler()
+##var_norm = mms.fit_transform(mf.iloc[:,2:])
+##print("Numpy array of normalised data\n========\n",
+##      var_norm,
+##      "\n",type(var_norm))
+##norm_df = pd.DataFrame(data = var_norm, columns = mf.iloc[:,2:].columns)
+##norm_df["Description"] = pd.Series(mf["Description"])
+##print("Normalised data frame\n========\n",
+##      norm_df)
+##print(norm_df.columns)
+##plt.scatter(norm_df["Time to Max"],norm_df["Lag Time"])
+##from pandas.plotting import scatter_matrix
+##scatter_matrix(norm_df)
+##plt.show()
+
+##
+### Create dataframe out of result so we can use .describe() later
+##var_norm_df = pd.DataFrame(data = var_norm, columns = X.columns)
+##
+##plt.subplot(1, 2, 1) 
+##plt.hist(x=X['INDUS'], bins='auto', rwidth=0.85)
+##plt.title('Not scaled')
+##
+##plt.subplot(1, 2, 2) 
+##plt.hist(x=var_norm_df['INDUS'], bins='auto', rwidth=0.85)
+##plt.title('Min-max scaled')
+##plt.tight_layout()
+##plt.show()
+##
+##print(X['INDUS'].describe())
+##print(var_norm_df['INDUS'].describe())
+
 
 #plotTrace(62)
     
