@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-toPrint = False
+toPrint = True
 
 SEC_PER_CYCLE = 945.6
 #file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
@@ -43,15 +43,15 @@ with os.scandir(basepath) as entries:
         print(file)
                 
 def getData(file):
-    #try:
-    df = pd.read_excel(basepath+file,
+    try:
+        df = pd.read_excel(basepath+file,
                            sheet_name='Results',
                            skiprows = 10,
                            usecols='A,N:OW')
-    #except FileNotFoundError:
-        #print("In getData, File ",file," not found")
-    #except:
-        #print("In getData, Couldn't make dataframe using file ",file)
+    except FileNotFoundError:
+        print("In getData, File ",file," not found")
+    except:
+        print("In getData, Couldn't make dataframe using file ",file)
     if toPrint: print("Original dataframe for ",file,"\n",df)
         #delete all rows with NaN in second column
     #df.dropna(how = "any", inplace = True)
@@ -114,7 +114,6 @@ def gradient(i, data_array_2D):
     except:
         return np.NaN
 
-    
 def areaUnderCurve(i, data_array_2D):
     baseline = data_array_2D[i][1]
     val_above_baseline = data_array_2D[i] - baseline
@@ -153,18 +152,6 @@ def cleanDesc(df):
         except:
             print("Problem cleaning labels at index ",i)
 
-##def plotTrace(i, plotGradient = True ):
-##    hours_per_cycle = SEC_PER_CYCLE/3600
-##    x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[i])+1)] 
-##    plt.plot(x_vals, data_array_2D[i])
-##    if plotGradient:
-##        g = features_df.loc[features_df.index[i], 'Gradient']
-##        lagTm =
-##        lagVal
-##        if g != nan(plotGradient and features_df != NaN
-##            plt.plot(x_vals, g(x_vals - 
-##    plt.show()
-
 def get_features_df(file):
     df = getData(file)
     try:
@@ -189,7 +176,7 @@ def get_features_df(file):
     try:
         addFileTag(features_df, file)
     except:
-        print("problem tagging filename ",file) 
+        print("problem tagging filename ", file) 
     try:
         cleanDesc(features_df)
         if toPrint: print(features_df)
@@ -206,28 +193,27 @@ def build_master_frame(files):
         print("Problem building first data from ",files[0])
     for file in files[1:]:     
         masterframe2 = None
-        #try:
-        masterframe2 = get_features_df(file)
-        #except:
-        #print("Problem building data from ",file)
-        #try:
-        masterframe = pd.concat([masterframe, masterframe2])
-        #except:
-        #print("Problem concatenating dataframe from ",file)
+        try:
+            masterframe2 = get_features_df(file)
+        except:
+            print("Problem building data from ",file)
+        try:
+            masterframe = pd.concat([masterframe, masterframe2])
+        except:
+            print("Problem concatenating dataframe from ",file)
     return masterframe
 
 #get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
 
-mf = build_master_frame(files)
-print(mf.index)
-mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-print(mf.index)
-
-
-###Filter out the positive reactions
-mf.dropna(subset =["Lag Time"], inplace = True)
-with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-    print("Master dataframe\n========\n", mf)
+##mf = build_master_frame(files)
+##print(mf.index)
+##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+##print(mf.index)
+##
+#####Filter out the positive reactions
+##mf.dropna(subset =["Lag Time"], inplace = True)
+##with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
+##    print("Master dataframe\n========\n", mf[['Description','Gradient', 'file name']])
 
 ##from sklearn.preprocessing import MinMaxScaler
 ##
@@ -262,9 +248,6 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 ##
 ##print(X['INDUS'].describe())
 ##print(var_norm_df['INDUS'].describe())
-
-
-#plotTrace(62)
     
 #generate an array of RT-QuIC plate data
 
@@ -283,3 +266,33 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 ##print(labelled_row_data_df)
 
 #df = df[pd.notnull(df[0])]
+
+def plotTrace(file, description):
+    hours_per_cycle = SEC_PER_CYCLE/3600
+    df = getData(file)
+    df.columns = df.iloc[0]
+    df.drop(df.index[0], inplace = True)
+    col_index = df.columns.get_loc("Description")
+    _, data_array_2D = splitNumbers(df)
+    
+    for i in range(0, df.shape[0]):
+        if df.iat[i, col_index] == description:
+            x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[i])+1)] 
+            plt.plot(x_vals, data_array_2D[i])
+            plt.ylabel("Flourescence Units")
+            plt.xlabel("Time (hours)")
+            plt.title(file+"\n"+description)
+            plt.show()
+            return
+    print("Could not find data to plot")
+            
+
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx","SD012/18")
+
+##    if plotGradient:
+##        g = features_df.loc[features_df.index[i], 'Gradient']
+##        lagTm =
+##        lagVal
+##        if g != nan(plotGradient and features_df != NaN
+##            plt.plot(x_vals, g(x_vals - 
+    
