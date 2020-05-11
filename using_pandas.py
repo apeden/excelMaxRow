@@ -43,6 +43,7 @@ with os.scandir(basepath) as entries:
         print(file)
                 
 def getData(file):
+    """Return raw dataframe using excel file sheet as input"""
     try:
         df = pd.read_excel(basepath+file,
                            sheet_name='Results',
@@ -69,6 +70,17 @@ def splitNumbers(dataframe):
     if toPrint: print(data_array_2D)
     return features_df.copy(), data_array_2D.copy() 
 
+"""helper function for finding first cycle where three successive
+cycles give flourescence values greater than a given value v
+"""
+def threshold_cycle(v, data_array_2D, i):
+    for c in range(len(data_array_2D[i])-2):        
+        if (data_array_2D[i][c] > v
+            and data_array_2D[i][c+1] > v
+            and data_array_2D[i][c+2] > v):
+            print ("threshold cycle is ",str(c))
+            return c
+
 """Methods for calculating features"""
 def maxVal(i, data_array_2D):
     try:
@@ -77,6 +89,7 @@ def maxVal(i, data_array_2D):
         return np.NaN
     
 def timeToMax(i, data_array_2D):
+    """in hours"""
     time_to_max = np.argmax(data_array_2D[i])*SEC_PER_CYCLE
     if not lagTime(i, data_array_2D) == np.NaN:
         return round(time_to_max/3600, 1)
@@ -84,33 +97,69 @@ def timeToMax(i, data_array_2D):
         return np.NaN
     
 def lagTime(i, data_array_2D):
-    t = 3* data_array_2D[i][1]
-    for j in range(len(data_array_2D[i])-2):        
-        if (data_array_2D[i][j] > t
-            and data_array_2D[i][j+1] > t
-            and data_array_2D[i][j+2] > t):
-            lag_time = j*SEC_PER_CYCLE
-            return round(lag_time/3600, 1)
-    return np.NaN
+    v = 3* data_array_2D[i][1]
+    try:
+        lagtime_sec = threshold_cycle(v, data_array_2D, i)*SEC_PER_CYCLE
+        return round(lagtime_sec/3600, 1)
+    except:
+        return np.NaN
 
 def lagVal(i, data_array_2D):
-    baseline = data_array_2D[i][1]
-    t = 3* baseline
-    for j in range(len(data_array_2D[i])-2):        
-        if (data_array_2D[i][j] > t
-            and data_array_2D[i][j+1] > t
-            and data_array_2D[i][j+2] > t):
-            return data_array_2D[i][j]
-    return np.NaN
+    v = 3* data_array_2D[i][1]
+    c = threshold_cycle(v, data_array_2D, i)
+    if c != None:
+        return data_array_2D[i][c]
+    else:
+        return np.NaN
 
-def gradient(i, data_array_2D):
+def timeToThreshold(i, data_array_2D):
+    baseline_mean = np.mean(data_array_2D[:][2])
+    baseline_std = np.std(data_array_2D[:][2])
+    min_ = baseline_mean + 5*baseline_std 
+    threshold = threshold_cycle(min_, data_array_2D, i)
+    threshold *= SEC_PER_CYCLE
+    threshold /= 3600
+    return threshold
+
+def gradient(i, data_array_2D, interval = 50):
+    """calculated as increase in fluorescence units
+    per unit time (in hours) for a specified interval
+    between the baseline and the max val
+    """
+    baseline_mean = np.mean(data_array_2D[:][2])
+    baseline_std = np.std(data_array_2D[:][2])
+    min_ = baseline_mean + 5*baseline_std
+    max_ = maxVal(i, data_array_2D)
+    range_ = max_ - min_
+    gradient_start_val = min_ + ((interval/(100))*(1/2)*range_)
+    gradient_start_cyc = threshold_cycle(gradient_start_val, data_array_2D, i)
+    gradient_end_val = max_ - ((interval/(100))*(1/2)*range_)
+    gradient_end_cyc = threshold_cycle(gradient_end_val, data_array_2D, i)
     try:
-        methods = maxVal, lagVal, timeToMax, lagTime
-        results = ()
-        for method in methods:
-            results += (method(i, data_array_2D),)
-        gradient = (results[0]-results[1])/(results[2]-results[3])     
+        gradient = (gradient_start_val-gradient_end_val)/(gradient_start_cyc-gradient_end_cyc)
+        gradient /= SEC_PER_CYCLE
+        gradient *= 3600
         return round(gradient, 1)
+    except:
+        return np.NaN
+
+
+def gradientStart(i, data_array_2D, interval = 50):
+    """used purely as a starting point for
+    drawing the line of best fit
+    """
+    baseline_mean = np.mean(data_array_2D[:][2])
+    baseline_std = np.std(data_array_2D[:][2])
+    min_ = baseline_mean + 5*baseline_std
+    max_ = maxVal(i, data_array_2D)
+    range_ = max_ - min_
+    try:
+        gradient_start_val = min_ + ((interval/(100))*(1/2)*range_)
+        gradient_start_cyc = threshold_cycle(gradient_start_val, data_array_2D, i)
+        gradient_start = gradient_start_cyc*SEC_PER_CYCLE
+        gradient_start /= 3600
+        print("Gradient start is ",str(gradient_start))
+        return gradient_start
     except:
         return np.NaN
 
@@ -125,9 +174,11 @@ def areaUnderCurve(i, data_array_2D):
     
 method_dict = {"Max Val": maxVal,
                "Time to Max": timeToMax,
+               "Time to threshold ": timeToThreshold,
                "Lag Time": lagTime,
                "Lag Val": lagVal,
                "Gradient": gradient,
+               "Gradient Start" : gradientStart,
                "AUC": areaUnderCurve}
 
 def addColumn(method_name, features_df, data_array_2D):
@@ -180,11 +231,11 @@ def get_features_df(file):
     try:
         cleanDesc(features_df)
         if toPrint: print(features_df)
-        return features_df
+        return features_df, data_array_2D
     except:
         print("Problem cleaning row names for ",file,"\n",features_df)
-    
 
+    
 def build_master_frame(files):
     masterframe = None
     try:
@@ -209,11 +260,12 @@ def build_master_frame(files):
 ##print(mf.index)
 ##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
 ##print(mf.index)
-##
-#####Filter out the positive reactions
-##mf.dropna(subset =["Lag Time"], inplace = True)
+
+#######Filter out the positive reactions from the masterframe
+##mf.dropna(inplace = True)
+##mf = mf[mf.Gradient > 0]
 ##with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-##    print("Master dataframe\n========\n", mf[['Description','Gradient', 'file name']])
+##    print("Master dataframe\n========\n", mf)
 
 ##from sklearn.preprocessing import MinMaxScaler
 ##
@@ -269,16 +321,19 @@ def build_master_frame(files):
 
 def plotTrace(file, description):
     hours_per_cycle = SEC_PER_CYCLE/3600
-    df = getData(file)
-    df.columns = df.iloc[0]
-    df.drop(df.index[0], inplace = True)
-    col_index = df.columns.get_loc("Description")
-    _, data_array_2D = splitNumbers(df)
+    features_df, data_array_2D = get_features_df(file)
+    desc_index = features_df.columns.get_loc("Description")
+    grad_index = features_df.columns.get_loc("Gradient")
     
-    for i in range(0, df.shape[0]):
-        if df.iat[i, col_index] == description:
+    for i in range(0, features_df.shape[0]):
+        if features_df.iat[i, desc_index] == description:
             x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[i])+1)] 
             plt.plot(x_vals, data_array_2D[i])
+            #print (features_df[description])
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+                print (features_df)
+            gradient = features_df.iat[i, grad_index]
+            plt.plot(x_vals, [x*gradient for x in x_vals])
             plt.ylabel("Flourescence Units")
             plt.xlabel("Time (hours)")
             plt.title(file+"\n"+description)
@@ -286,8 +341,7 @@ def plotTrace(file, description):
             return
     print("Could not find data to plot")
             
-
-plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx","SD012/18")
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx","SD012/18 FC")
 
 ##    if plotGradient:
 ##        g = features_df.loc[features_df.index[i], 'Gradient']
