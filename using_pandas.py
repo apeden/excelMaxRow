@@ -112,14 +112,6 @@ def lagVal(i, data_array_2D):
     else:
         return np.NaN
 
-def timeToThreshold(i, data_array_2D):
-    baseline_mean = np.mean(data_array_2D[:][2])
-    baseline_std = np.std(data_array_2D[:][2])
-    min_ = baseline_mean + 5*baseline_std 
-    threshold = threshold_cycle(min_, data_array_2D, i)
-    threshold *= SEC_PER_CYCLE
-    threshold /= 3600
-    return threshold
 
 def gradient(i, data_array_2D, interval = 50):
     """calculated as increase in fluorescence units
@@ -174,7 +166,6 @@ def areaUnderCurve(i, data_array_2D):
     
 method_dict = {"Max Val": maxVal,
                "Time to Max": timeToMax,
-               "Time to threshold ": timeToThreshold,
                "Lag Time": lagTime,
                "Lag Val": lagVal,
                "Gradient": gradient,
