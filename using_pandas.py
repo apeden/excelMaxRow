@@ -25,12 +25,8 @@ POSITIVES =(
 "66/13",
 "67/13")
 
-POSITIVE_STANDARDS =(
-"sCJD MM1",
-"sCJD VV2")
 
 NEGATIVES = "MM","MV","VV"
-
 
 with os.scandir(basepath) as entries:
     for entry in entries:
@@ -112,8 +108,7 @@ def lagVal(i, data_array_2D):
     else:
         return np.NaN
 
-
-def gradient(i, data_array_2D, interval = 50):
+def gradient(i, data_array_2D, interval = 10):
     """calculated as increase in fluorescence units
     per unit time (in hours) for a specified interval
     between the baseline and the max val
@@ -123,20 +118,31 @@ def gradient(i, data_array_2D, interval = 50):
     min_ = baseline_mean + 5*baseline_std
     max_ = maxVal(i, data_array_2D)
     range_ = max_ - min_
-    gradient_start_val = min_ + ((interval/(100))*(1/2)*range_)
+    gradient_start_val = min_ + ((range_/2) - (range_*(interval/100)*(1/2)))
     gradient_start_cyc = threshold_cycle(gradient_start_val, data_array_2D, i)
-    gradient_end_val = max_ - ((interval/(100))*(1/2)*range_)
+    gradient_end_val = max_ - ((range_/2) - (range_*(interval/100)*(1/2)))
     gradient_end_cyc = threshold_cycle(gradient_end_val, data_array_2D, i)
+    print("gradient start flouresence" ,gradient_start_val)
+    print("gradient start cycle"       ,gradient_start_cyc)
+    print("gradient end flouresence"   ,gradient_end_val)
+    print("gradient end cycle"   ,gradient_end_cyc)
     try:
-        gradient = (gradient_start_val-gradient_end_val)/(gradient_start_cyc-gradient_end_cyc)
+        gradient = (gradient_end_val - gradient_start_val)/(gradient_end_cyc - gradient_start_cyc)
         gradient /= SEC_PER_CYCLE
         gradient *= 3600
+        print("gradient"   ,gradient)
         return round(gradient, 1)
+        
     except:
         return np.NaN
 
+def base_threshold(i, data_array_2D):
+    baseline_mean = np.mean(data_array_2D[:][2])
+    baseline_std = np.std(data_array_2D[:][2])
+    return baseline_mean + 5*baseline_std
 
-def gradientStart(i, data_array_2D, interval = 50):
+
+def gradientStart(i, data_array_2D, interval = 10):
     """used purely as a starting point for
     drawing the line of best fit
     """
@@ -146,7 +152,7 @@ def gradientStart(i, data_array_2D, interval = 50):
     max_ = maxVal(i, data_array_2D)
     range_ = max_ - min_
     try:
-        gradient_start_val = min_ + ((interval/(100))*(1/2)*range_)
+        gradient_start_val = min_ + ((range_- interval)/2)
         gradient_start_cyc = threshold_cycle(gradient_start_val, data_array_2D, i)
         gradient_start = gradient_start_cyc*SEC_PER_CYCLE
         gradient_start /= 3600
@@ -170,7 +176,8 @@ method_dict = {"Max Val": maxVal,
                "Lag Val": lagVal,
                "Gradient": gradient,
                "Gradient Start" : gradientStart,
-               "AUC": areaUnderCurve}
+               "AUC": areaUnderCurve,
+               "Base threshold":base_threshold}
 
 def addColumn(method_name, features_df, data_array_2D):
     features_df[method_name] = np.NaN
@@ -315,6 +322,9 @@ def plotTrace(file, description):
     features_df, data_array_2D = get_features_df(file)
     desc_index = features_df.columns.get_loc("Description")
     grad_index = features_df.columns.get_loc("Gradient")
+    grad_start_index = features_df.columns.get_loc("Gradient Start")
+    max_index = features_df.columns.get_loc("Max Val")
+    base_index = features_df.columns.get_loc("Base threshold")
     
     for i in range(0, features_df.shape[0]):
         if features_df.iat[i, desc_index] == description:
@@ -324,9 +334,12 @@ def plotTrace(file, description):
             with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
                 print (features_df)
             gradient = features_df.iat[i, grad_index]
-            plt.plot(x_vals, [x*gradient for x in x_vals])
+            gradient_start = features_df.iat[i, grad_start_index]
+            plt.plot(x_vals, [x*gradient for x in x_vals- gradient_start])
             plt.ylabel("Flourescence Units")
             plt.xlabel("Time (hours)")
+            plt.axhline(features_df.iat[i, max_index])
+            plt.axhline(features_df.iat[i, base_index])
             plt.title(file+"\n"+description)
             plt.show()
             return
