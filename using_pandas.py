@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+import os, math
 
 toPrint = True
 
@@ -74,7 +74,6 @@ def threshold_cycle(v, data_array_2D, i):
         if (data_array_2D[i][c] > v
             and data_array_2D[i][c+1] > v
             and data_array_2D[i][c+2] > v):
-            print ("threshold cycle is ",str(c))
             return c
 
 """Methods for calculating features"""
@@ -113,26 +112,21 @@ def gradient(i, data_array_2D, interval = 10):
     per unit time (in hours) for a specified interval
     between the baseline and the max val
     """
-    baseline_mean = np.mean(data_array_2D[:][2])
-    baseline_std = np.std(data_array_2D[:][2])
-    min_ = baseline_mean + 5*baseline_std
-    max_ = maxVal(i, data_array_2D)
-    range_ = max_ - min_
-    gradient_start_val = min_ + ((range_/2) - (range_*(interval/100)*(1/2)))
+    min_ = base_threshold(i, data_array_2D)
+    max_ = lagVal(i, data_array_2D)
+    gradient_start_val = min_
     gradient_start_cyc = threshold_cycle(gradient_start_val, data_array_2D, i)
-    gradient_end_val = max_ - ((range_/2) - (range_*(interval/100)*(1/2)))
+    gradient_end_val = max_
     gradient_end_cyc = threshold_cycle(gradient_end_val, data_array_2D, i)
-    print("gradient start flouresence" ,gradient_start_val)
-    print("gradient start cycle"       ,gradient_start_cyc)
-    print("gradient end flouresence"   ,gradient_end_val)
-    print("gradient end cycle"   ,gradient_end_cyc)
+    #print("gradient start flouresence" ,gradient_start_val)
+    #print("gradient start cycle"       ,gradient_start_cyc)
+    #print("gradient end flouresence"   ,gradient_end_val)
+    #print("gradient end cycle"   ,gradient_end_cyc)
     try:
         gradient = (gradient_end_val - gradient_start_val)/(gradient_end_cyc - gradient_start_cyc)
         gradient /= SEC_PER_CYCLE
         gradient *= 3600
-        print("gradient"   ,gradient)
-        return round(gradient, 1)
-        
+        return round(gradient, 1)    
     except:
         return np.NaN
 
@@ -141,14 +135,11 @@ def base_threshold(i, data_array_2D):
     baseline_std = np.std(data_array_2D[:][2])
     return baseline_mean + 5*baseline_std
 
-
 def gradientStart(i, data_array_2D, interval = 10):
     """used purely as a starting point for
     drawing the line of best fit
     """
-    baseline_mean = np.mean(data_array_2D[:][2])
-    baseline_std = np.std(data_array_2D[:][2])
-    min_ = baseline_mean + 5*baseline_std
+    min_ = base_threshold(i, data_array_2D)
     max_ = maxVal(i, data_array_2D)
     range_ = max_ - min_
     try:
@@ -161,8 +152,18 @@ def gradientStart(i, data_array_2D, interval = 10):
     except:
         return np.NaN
 
+def time_to_base(i, data_array_2D):
+    base_cyc = threshold_cycle(base_threshold(i, data_array_2D),
+                                         data_array_2D, i)
+    try:
+        base_start = base_cyc*SEC_PER_CYCLE
+        base_start /= 3600
+        return base_start
+    except:
+        return np.NaN
+        
 def areaUnderCurve(i, data_array_2D):
-    baseline = data_array_2D[i][1]
+    baseline = base_threshold(i, data_array_2D)
     val_above_baseline = data_array_2D[i] - baseline
     area = val_above_baseline.sum()
     if area > 0:
@@ -177,7 +178,8 @@ method_dict = {"Max Val": maxVal,
                "Gradient": gradient,
                "Gradient Start" : gradientStart,
                "AUC": areaUnderCurve,
-               "Base threshold":base_threshold}
+               "Base threshold":base_threshold,
+               "Time to base": time_to_base}
 
 def addColumn(method_name, features_df, data_array_2D):
     features_df[method_name] = np.NaN
@@ -317,35 +319,69 @@ def build_master_frame(files):
 
 #df = df[pd.notnull(df[0])]
 
-def plotTrace(file, description):
+
+feat_selected = {"Gradient":1,
+                 "Max Val":1,
+                 "Base threshold":1,
+                 "Time to base":1,
+                 "Lag Val":1}
+
+def get_feat(feature, i, df):
+    series = df.columns.get_loc(feature)
+    return df.iat[i, series]
+
+def plotTrace(file, description = None):
     hours_per_cycle = SEC_PER_CYCLE/3600
+    #get calculated features and corresponding raw data from an excel file/sheet2
     features_df, data_array_2D = get_features_df(file)
-    desc_index = features_df.columns.get_loc("Description")
-    grad_index = features_df.columns.get_loc("Gradient")
-    grad_start_index = features_df.columns.get_loc("Gradient Start")
-    max_index = features_df.columns.get_loc("Max Val")
-    base_index = features_df.columns.get_loc("Base threshold")
+    num_traces = features_df.shape[0]
+    x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[0])+1)]
     
-    for i in range(0, features_df.shape[0]):
-        if features_df.iat[i, desc_index] == description:
-            x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[i])+1)] 
-            plt.plot(x_vals, data_array_2D[i])
-            #print (features_df[description])
-            with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
-                print (features_df)
-            gradient = features_df.iat[i, grad_index]
-            gradient_start = features_df.iat[i, grad_start_index]
-            plt.plot(x_vals, [x*gradient for x in x_vals- gradient_start])
+    def singlePlot(i, labels = True):
+        plt.plot(x_vals, data_array_2D[i])
+        #with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+        #j    print (features_df)
+        gradient = get_feat("Gradient",i,features_df)
+        gradient_start = get_feat("Time to base",i,features_df)
+        gradient_base = base_threshold(i, data_array_2D)
+        plt.plot(x_vals, [((x*gradient)+ gradient_base) for x in (x_vals - gradient_start)])
+        
+        for parameter in "Max Val", "Base threshold", "Lag Val":
+            plt.axhline(get_feat(parameter,i,features_df))
+        plt.ylim(0,300000)
+        plt.xlim(0,100)
+        if labels:
             plt.ylabel("Flourescence Units")
             plt.xlabel("Time (hours)")
-            plt.axhline(features_df.iat[i, max_index])
-            plt.axhline(features_df.iat[i, base_index])
-            plt.title(file+"\n"+description)
+            plt.title(file+"\n"+get_feat("Description", i, features_df))
+        
+    if description == None:
+        for i in range(0, num_traces, 4):
+            for j in range(4):
+                plt.subplot(2, 2, j+1)
+                singlePlot(i+j)
+            plt.subplots_adjust(wspace = 0.4)
+            plt.subplots_adjust(hspace = 0.6)
             plt.show()
-            return
-    print("Could not find data to plot")
-            
-plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx","SD012/18 FC")
+    else:
+        for i in range(num_traces):
+            if get_feat("Description", i, features_df) == description:                
+                singlePlot(i)            
+                plt.show()
+        
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
+          #"SD012/18 FC")
+
+
+features_df, _ = get_features_df(file)
+
+def plot_mult_trace(file, df):
+    for description in range(len(compnts)):
+        plt.subplot((math.ceil(len(compnts)/2)), 2, i+1)
+        plotTrace(file, description)
+
+
+
 
 ##    if plotGradient:
 ##        g = features_df.loc[features_df.index[i], 'Gradient']
