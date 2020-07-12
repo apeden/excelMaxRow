@@ -25,7 +25,11 @@ POSITIVES =(
 "66/13",
 "67/13")
 
+POS_CONTROLS = "MM1","VV2"
+
 NEGATIVES = "MM","MV","VV"
+
+
 
 with os.scandir(basepath) as entries:
     for entry in entries:
@@ -177,6 +181,7 @@ def gradient(i, data_array_2D, features_df):
     except:
         return np.NaN
 
+
     
 method_dict = { "Base":base,
                 "Base threshold":base_threshold,
@@ -274,52 +279,84 @@ def build_master_frame(files):
 
 
 
-##mf = build_master_frame(files)
+mf = build_master_frame(files)
+
+
+
+def status(row):
+    for item in POSITIVES:
+        if item in row['Description']:
+            return "Blinded positive"
+    for item in POS_CONTROLS:
+        if item in row['Description']:
+            return "Positive control"    
+    for item in NEGATIVES:
+        if item in row['Description']:
+            return "Negative control"
+    return "test sample"
+
+
+
+type_colour = {"Blinded positive":"r",
+               "Positive control":"b",
+               "Negative control":"g",
+               "test sample":"y"}
+
 ##### Reset index ###############################################################
-##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-##
+mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+
 ##### Filter out the positive reactions from the masterframe ####################
-##mf.dropna(inplace = True)
-##mf = mf[mf.Gradient > 0]
-##
+mf.dropna(inplace = True)
+mf = mf[mf.Gradient > 0]
+
+
+
 ##### select features for printing: 1= print, 0= don't print ####################
-##method = {"file name":1,
-##          "Description":1,
-##          "Base":1,
-##          "Max Val":0,
-##          "Time to Max":0,
-##          "Time to 75% max":0,
-##          "Lag Time":0,
-##          "Lag Val":0,
-##          "Gradient":1,
-##          "AUC":1,
-##          "Base threshold":1,
-##          "Time to base":1}
-##
-##for_display = []
-##for selected in method:
-##    if method[selected]:
-##        for_display.append(selected)
+method = {"file name":0,
+          "Description":0,
+          "Base":1,
+          "Max Val":1,
+          "Time to Max":1,
+          "Time to 75% max":1,
+          "Lag Time":1,
+          "Lag Val":1,
+          "Gradient":1,
+          "AUC":1,
+          "Base threshold":1,
+          "Time to base":1,
+          "Sample type":0}
+
+for_display = []
+for selected in method:
+    if method[selected]:
+        for_display.append(selected)
 
 #with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-   # print("Master dataframe\n========\n", mf[for_display])
+#   print("Master dataframe\n========\n", mf)
 
-##from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 ##
-##mms = MinMaxScaler()
-##var_norm = mms.fit_transform(mf.iloc[:,2:])
+mms = MinMaxScaler()
+var_norm = mms.fit_transform(mf[for_display])
 ##print("Numpy array of normalised data\n========\n",
 ##      var_norm,
 ##      "\n",type(var_norm))
-##norm_df = pd.DataFrame(data = var_norm, columns = mf.iloc[:,2:].columns)
-##norm_df["Description"] = pd.Series(mf["Description"])
-##print("Normalised data frame\n========\n",
-##      norm_df)
-##print(norm_df.columns)
-##plt.scatter(norm_df["Time to Max"],norm_df["Lag Time"])
-##from pandas.plotting import scatter_matrix
-##scatter_matrix(norm_df)
-##plt.show()
+norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
+for category in "Description", "Sample type":
+    norm_df[category] = mf[category].reset_index(drop = True)
+print("Normalised data frame\n========\n", norm_df)
+print(norm_df.columns)
+for sample_type, colour in type_colour.items():
+    subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
+    plt.scatter(subset_df["Time to Max"],
+                subset_df["AUC"],
+                c = colour)
+plt.xlabel("Time to Max (min to max)")
+plt.ylabel("AUC (min to max)")
+#from pandas.plotting import scatter_matrix
+#scatter_matrix(norm_df)
+plt.show()
 
 
 ### Create dataframe out of result so we can use .describe() later
@@ -401,6 +438,6 @@ def plotTrace(file, description = None):
                 singlePlot(i)            
                 plt.show()
         
-plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
+#plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
 
 
