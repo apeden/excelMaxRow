@@ -38,8 +38,8 @@ Using this programme, it is possible to generate a data frame of features and th
 
 
 ![AUC vesus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Time%20to%20max.jpeg)
-- red: positive controls
-- blue: blinded positive controls
+- blue : positive controls
+- red: blinded positive controls
 - green: negative controls
 - cyan: the test samples
 
