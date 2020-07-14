@@ -35,3 +35,11 @@ This programme is designed to collate RT-QuIC data (exported to excel files from
 
 ## Plotting two features on a scattergram
 Using this programme, it is possible to generate a data frame of features and then select two of these features for plotting a scattergram.
+
+If you want to embed images, this is how you do it:
+
+![AUC vesus time to max](https://octodex.github.com/images/yaktocat.png)
+
+
+
+
