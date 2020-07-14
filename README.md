@@ -37,8 +37,7 @@ This programme is designed to collate RT-QuIC data (exported to excel files from
 Using this programme, it is possible to generate a data frame of features and then select two of these features for plotting a scattergram.
 
 If you want to embed images, this is how you do it:
-
-![AUC vesus time to max](https://octodex.github.com/images/yaktocat.png)
+![AUC vesus time to max](https://https://github.com/apeden/excelMaxRow/AUC vs Time to max.jpeg)
 
 
 
