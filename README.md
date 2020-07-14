@@ -34,10 +34,14 @@ This programme is designed to collate RT-QuIC data (exported to excel files from
 * Area under the curve
 
 ## Plotting two features on a scattergram
-Using this programme, it is possible to generate a data frame of features and then select two of these features for plotting a scattergram.
+Using this programme, it is possible to generate a data frame of features and then select two of these features for plotting a scattergram. The following example shows the area under the curve (AUC) plotted against Time to maximum value. The features have been scaled to between 0 (minimum) and 1 (maximum).
 
-If you want to embed images, this is how you do it:
-![AUC vesus time to max](https://https://github.com/apeden/excelMaxRow/AUC vs Time to max.jpeg)
+
+![AUC vesus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Time%20to%20max.jpeg)
+- red: positive controls
+- blue: blinded positive controls
+- green: negative controls
+- cyan: the test samples
 
 
 
