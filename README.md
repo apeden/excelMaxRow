@@ -20,6 +20,13 @@ Please contact me (Alex Peden)
 ## Acknowledgements
 Eric Gazoni, Charlie Clark who created with openpyxl library.
 
+## Plotting a single RT-QuIC traces selected from a dataframe
+Once a dataframe has been generated from multiple excel files it is possible to use a function called tracePlot to plot a single trace. The trace can be selected by suppling two arguments: the name of the excel file, and the sample label. An example plot is shown below. 
+
+![Single trace](https://github.com/apeden/excelMaxRow/blob/master/sing_trace.png)
+
+
+
 
 ## Plotting multiple traces
 Using a function called tracePlot you can plot multiple traces:
