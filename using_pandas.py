@@ -255,7 +255,6 @@ def get_features_df(file):
         print("Problem cleaning row names for ",file,"\n")
     features_df = features_df.dropna(subset =["Description"])
     return features_df, data_array_2D
-
     
 def build_master_frame(files):
     masterframe = None
@@ -274,12 +273,6 @@ def build_master_frame(files):
         #except:
         #print("Problem concatenating dataframe from ",file)
     return masterframe
-
-#get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
-
-
-
-mf = build_master_frame(files)
 
 
 
@@ -301,97 +294,6 @@ type_colour = {"Blinded positive":"r",
                "Positive control":"b",
                "Negative control":"g",
                "test sample":"y"}
-
-##### Reset index ###############################################################
-mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
-
-##### Filter out the positive reactions from the masterframe ####################
-mf.dropna(inplace = True)
-mf = mf[mf.Gradient > 0]
-
-
-
-##### select features for printing: 1= print, 0= don't print ####################
-method = {"file name":0,
-          "Description":0,
-          "Base":1,
-          "Max Val":1,
-          "Time to Max":1,
-          "Time to 75% max":1,
-          "Lag Time":1,
-          "Lag Val":1,
-          "Gradient":1,
-          "AUC":1,
-          "Base threshold":1,
-          "Time to base":1,
-          "Sample type":0}
-
-for_display = []
-for selected in method:
-    if method[selected]:
-        for_display.append(selected)
-
-#with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-#   print("Master dataframe\n========\n", mf)
-
-from sklearn.preprocessing import MinMaxScaler
-##
-mms = MinMaxScaler()
-var_norm = mms.fit_transform(mf[for_display])
-##print("Numpy array of normalised data\n========\n",
-##      var_norm,
-##      "\n",type(var_norm))
-norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
-for category in "Description", "Sample type":
-    norm_df[category] = mf[category].reset_index(drop = True)
-print("Normalised data frame\n========\n", norm_df)
-print(norm_df.columns)
-for sample_type, colour in type_colour.items():
-    subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
-    plt.scatter(subset_df["Time to Max"],
-                subset_df["AUC"],
-                c = colour)
-plt.xlabel("Time to Max (min to max)")
-plt.ylabel("AUC (min to max)")
-#from pandas.plotting import scatter_matrix
-#scatter_matrix(norm_df)
-plt.show()
-
-
-### Create dataframe out of result so we can use .describe() later
-##var_norm_df = pd.DataFrame(data = var_norm, columns = X.columns)
-##
-##plt.subplot(1, 2, 1) 
-##plt.hist(x=X['INDUS'], bins='auto', rwidth=0.85)
-##plt.title('Not scaled')
-##
-##plt.subplot(1, 2, 2) 
-##plt.hist(x=var_norm_df['INDUS'], bins='auto', rwidth=0.85)
-##plt.title('Min-max scaled')
-##plt.tight_layout()
-##plt.show()
-##
-##print(X['INDUS'].describe())
-##print(var_norm_df['INDUS'].describe())
-    
-#generate an array of RT-QuIC plate data
-
-##print(for_array_df)
-##for_array_df_numeric = for_array_df.apply(pd.to_numeric)
-##print(for_array_df_numeric)
-##print(for_array_df_numeric.T.describe())
-
-
-##print("Conversion to array \n ",data_array_2D)
-##labelled_row_data_df = non_nan_df.iloc[1:,0:1]
-##labelled_row_data_df.rename(columns={'Back to experimental setup': 'Labels'}, inplace = True)
-##print("Just labels df\n", labelled_row_data_df)
-##print(len(data_array_2D[:]))
-##labelled_row_data_df["Row Data"]= data_array_2D[:]
-##print(labelled_row_data_df)
-
-#df = df[pd.notnull(df[0])]
 
 
 def get_feat(feature, i, df):
@@ -437,7 +339,109 @@ def plotTrace(file, description = None):
             if get_feat("Description", i, features_df) == description:                
                 singlePlot(i)            
                 plt.show()
+
+
+method = {"file name":0,
+          "Description":0,
+          "Base":1,
+          "Max Val":1,
+          "Time to Max":1,
+          "Time to 75% max":1,
+          "Lag Time":1,
+          "Lag Val":1,
+          "Gradient":1,
+          "AUC":1,
+          "Base threshold":1,
+          "Time to base":1,
+          "Sample type":0}
+
+
+
+#get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
+
+#########  Build master frame   #################################################
+                
+##mf = build_master_frame(files)
+
+##### Reset index ###############################################################
+##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+##mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+
+##### Filter out the positive reactions from the masterframe ####################
+##mf.dropna(inplace = True)
+##mf = mf[mf.Gradient > 0]
+
+##### select features for printing: 1= print, 0= don't print ####################
+
+
+##for_display = []
+##for selected in method:
+##    if method[selected]:
+##        for_display.append(selected)
+
+#with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
+#   print("Master dataframe\n========\n", mf)
+
+##from sklearn.preprocessing import MinMaxScaler
+####
+##mms = MinMaxScaler()
+##var_norm = mms.fit_transform(mf[for_display])
+####print("Numpy array of normalised data\n========\n",
+####      var_norm,
+####      "\n",type(var_norm))
+##norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
+##for category in "Description", "Sample type":
+##    norm_df[category] = mf[category].reset_index(drop = True)
+##print("Normalised data frame\n========\n", norm_df)
+##print(norm_df.columns)
+##for sample_type, colour in type_colour.items():
+##    subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
+##    plt.scatter(subset_df["Time to Max"],
+##                subset_df["AUC"],
+##                c = colour)
+##plt.xlabel("Time to Max (min to max)")
+##plt.ylabel("AUC (min to max)")
+###from pandas.plotting import scatter_matrix
+###scatter_matrix(norm_df)
+##plt.show()
+
+
+### Create dataframe out of result so we can use .describe() later
+##var_norm_df = pd.DataFrame(data = var_norm, columns = X.columns)
+##
+##plt.subplot(1, 2, 1) 
+##plt.hist(x=X['INDUS'], bins='auto', rwidth=0.85)
+##plt.title('Not scaled')
+##
+##plt.subplot(1, 2, 2) 
+##plt.hist(x=var_norm_df['INDUS'], bins='auto', rwidth=0.85)
+##plt.title('Min-max scaled')
+##plt.tight_layout()
+##plt.show()
+##
+##print(X['INDUS'].describe())
+##print(var_norm_df['INDUS'].describe())
+    
+#generate an array of RT-QuIC plate data
+
+##print(for_array_df)
+##for_array_df_numeric = for_array_df.apply(pd.to_numeric)
+##print(for_array_df_numeric)
+##print(for_array_df_numeric.T.describe())
+
+
+##print("Conversion to array \n ",data_array_2D)
+##labelled_row_data_df = non_nan_df.iloc[1:,0:1]
+##labelled_row_data_df.rename(columns={'Back to experimental setup': 'Labels'}, inplace = True)
+##print("Just labels df\n", labelled_row_data_df)
+##print(len(data_array_2D[:]))
+##labelled_row_data_df["Row Data"]= data_array_2D[:]
+##print(labelled_row_data_df)
+
+#df = df[pd.notnull(df[0])]
+
+
         
-#plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
 
 
