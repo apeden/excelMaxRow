@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, math
 
-toPrint = False
+toPrint = True
 
 SEC_PER_CYCLE = 945.6
 #file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
@@ -318,13 +318,13 @@ def plotTrace(file, description = None):
         parameters = (("Max Val","r"), ("Base threshold","g"), ("Lag Val","b"))
         for parameter, c, in parameters:
             plt.axhline(get_feat(parameter,i,features_df), color = c, label = parameter)
-        plt.ylim(0,300000)
+        plt.ylim(0,200000)
         plt.xlim(0,100)
         if labels:
             plt.legend()
             plt.ylabel("Flourescence Units")
             plt.xlabel("Time (hours)")
-            plt.title(file+"\n"+get_feat("Description", i, features_df))
+            #plt.title(file+"\n"+get_feat("Description", i, features_df))
         
     if description == None:
         for i in range(0, num_traces-9, 4):
@@ -442,6 +442,6 @@ method = {"file name":0,
 
 
         
-plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
-
+#plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx", "SD012/18 FC")
 
