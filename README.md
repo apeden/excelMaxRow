@@ -26,8 +26,6 @@ Once a dataframe has been generated from multiple excel files it is possible to 
 ![Single trace](https://github.com/apeden/excelMaxRow/blob/master/sing_trace.png)
 
 
-
-
 ## Plotting multiple traces
 Using a function called tracePlot you can plot multiple traces:
 
