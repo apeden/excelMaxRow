@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, math
 
-toPrint = True
-
+toPrint = False
 SEC_PER_CYCLE = 945.6
 #file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
 files = []
@@ -28,8 +27,6 @@ POSITIVES =(
 POS_CONTROLS = "MM1","VV2"
 
 NEGATIVES = "MM","MV","VV"
-
-
 
 with os.scandir(basepath) as entries:
     for entry in entries:
@@ -58,7 +55,6 @@ def getData(file):
     #df.dropna(how = "any", inplace = True)
     #if toPrint: print("Data frame for ",file," with NaN dropped \n", df)
     
-
 def splitNumbers(dataframe):
     """split off numeric rtquic data from (equivalently indexed) data labels
     Return a 2D array (numeric data) and simple dataframe of labels
@@ -72,7 +68,6 @@ def splitNumbers(dataframe):
         print("Could not extract numeric data as array")
     if toPrint: print(data_array_2D)
     return features_df.copy(), data_array_2D.copy() 
-
 
 def threshold_cycle(v, data_array_2D, i):
     """helper function for finding first cycle where three successive
@@ -91,11 +86,9 @@ def maxVal(i, data_array_2D, features_df):
     except:
         return np.NaN
     
-
 def _75maxVal(i, data_array_2D, features_df):
     """helper function foor calculating value that is 75% max"""
     return 0.75*maxVal(i, data_array_2D, features_df)
-
 
 def timeToMax(i, data_array_2D, features_df):
     """in hours"""
@@ -129,7 +122,6 @@ def lagVal(i, data_array_2D, features_df):
         return data_array_2D[i][c]
     else:
         return np.NaN
-
 
 def base(i, data_array_2D, features_df):
     return data_array_2D[i,2]
@@ -180,9 +172,7 @@ def gradient(i, data_array_2D, features_df):
         return round(gradient, 1)    
     except:
         return np.NaN
-
-
-    
+   
 method_dict = { "Base":base,
                 "Base threshold":base_threshold,
                 "Max Val": maxVal,
@@ -227,22 +217,15 @@ def get_features_df(file):
         df.columns = df.iloc[0]
     except:
         print("Couldn't set columns for ",file)
-    #try:
     df.drop(df.index[0], inplace = True)    
     df = df[df.Description != 0]
-    #df = df.dropna(subset =["Description"])
-    #except:
-       # print("Problem with cleaning null or zero rows for ",file)
     if toPrint: print("Basic dataframe for ",file,"\n",df)
     try:
         features_df, data_array_2D = splitNumbers(df)
     except:
         print("Problem with splitting row labels and numbers for ",file)
     for method_name in method_dict:
-        #try:
         addColumn(method_name, method_dict, features_df, data_array_2D)
-        #except:
-        #print("Problem calculating ",method_name, " for ",file)
     try:
         addFileTag(features_df, file)
     except:
@@ -250,7 +233,6 @@ def get_features_df(file):
     try:
         cleanDesc(features_df)
         if toPrint: print(features_df)
-        
     except:
         print("Problem cleaning row names for ",file,"\n")
     features_df = features_df.dropna(subset =["Description"])
@@ -258,23 +240,15 @@ def get_features_df(file):
     
 def build_master_frame(files):
     masterframe = None
-    #try:
     masterframe, _ = get_features_df(files[0])
-    #except:
-    #print("Problem building first data from ",files[0])
     for file in files[1:]:     
         masterframe2 = None
         try:
             masterframe2, _ = get_features_df(file)
         except:
             print("Problem building data from ",file)
-        #try:
         masterframe = pd.concat([masterframe, masterframe2])
-        #except:
-        #print("Problem concatenating dataframe from ",file)
     return masterframe
-
-
 
 def status(row):
     for item in POSITIVES:
@@ -288,13 +262,10 @@ def status(row):
             return "Negative control"
     return "test sample"
 
-
-
 type_colour = {"Blinded positive":"r",
                "Positive control":"b",
                "Negative control":"g",
                "test sample":"y"}
-
 
 def get_feat(feature, i, df):
     series = df.columns.get_loc(feature)
@@ -302,15 +273,12 @@ def get_feat(feature, i, df):
 
 def plotTrace(file, description = None):
     hours_per_cycle = SEC_PER_CYCLE/3600
-    #get calculated features and corresponding raw data from an excel file/sheet2
     features_df, data_array_2D = get_features_df(file)
     num_traces = features_df.shape[0]
     x_vals = [x*hours_per_cycle for x in range(1, len(data_array_2D[0])+1)]
     
     def singlePlot(i, labels = True):
         plt.plot(x_vals, data_array_2D[i])
-        #with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
-        #    print (features_df)
         gradient = get_feat("Gradient",i,features_df)
         gradient_start = get_feat("Time to base",i,features_df)
         gradient_base = base_threshold(i, data_array_2D, features_df)
@@ -324,7 +292,6 @@ def plotTrace(file, description = None):
             plt.legend()
             plt.ylabel("Flourescence Units")
             plt.xlabel("Time (hours)")
-            #plt.title(file+"\n"+get_feat("Description", i, features_df))
         
     if description == None:
         for i in range(0, num_traces-9, 4):
@@ -340,71 +307,85 @@ def plotTrace(file, description = None):
                 singlePlot(i)            
                 plt.show()
 
-
 method = {"file name":0,
           "Description":0,
-          "Base":1,
+          "Base":0,
           "Max Val":1,
           "Time to Max":1,
-          "Time to 75% max":1,
+          "Time to 75% max":0,
           "Lag Time":1,
           "Lag Val":1,
           "Gradient":1,
           "AUC":1,
-          "Base threshold":1,
-          "Time to base":1,
+          "Base threshold":0,
+          "Time to base":0,
           "Sample type":0}
-
-
 
 #get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
 
 #########  Build master frame   #################################################
                 
-##mf = build_master_frame(files)
+mf = build_master_frame(files)
 
 ##### Reset index ###############################################################
-##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-##mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
 
 ##### Filter out the positive reactions from the masterframe ####################
-##mf.dropna(inplace = True)
-##mf = mf[mf.Gradient > 0]
+mf.dropna(inplace = True)
+mf = mf[mf.Gradient > 0]
 
 ##### select features for printing: 1= print, 0= don't print ####################
-
-
-##for_display = []
-##for selected in method:
-##    if method[selected]:
-##        for_display.append(selected)
+for_display = []
+for selected in method:
+    if method[selected]:
+        for_display.append(selected)
 
 #with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
 #   print("Master dataframe\n========\n", mf)
 
-##from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 ####
-##mms = MinMaxScaler()
-##var_norm = mms.fit_transform(mf[for_display])
-####print("Numpy array of normalised data\n========\n",
-####      var_norm,
-####      "\n",type(var_norm))
-##norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
-##for category in "Description", "Sample type":
-##    norm_df[category] = mf[category].reset_index(drop = True)
+mms = MinMaxScaler()
+var_norm = mms.fit_transform(mf[for_display])
+#print("Numpy array of normalised data\n========\n",
+#     var_norm,
+#      "\n",type(var_norm))
+norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
+for category in "Description", "Sample type":
+    norm_df[category] = mf[category].reset_index(drop = True)
 ##print("Normalised data frame\n========\n", norm_df)
-##print(norm_df.columns)
-##for sample_type, colour in type_colour.items():
-##    subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
-##    plt.scatter(subset_df["Time to Max"],
-##                subset_df["AUC"],
-##                c = colour)
-##plt.xlabel("Time to Max (min to max)")
-##plt.ylabel("AUC (min to max)")
-###from pandas.plotting import scatter_matrix
-###scatter_matrix(norm_df)
-##plt.show()
+print(norm_df.columns)
 
+def pairwise_compare(var1, var2):
+    assert var1 in norm_df.columns
+    assert var2 in norm_df.columns
+    for sample_type, colour in type_colour.items():
+        subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
+        plt.scatter(subset_df[var1],
+                    subset_df[var2],
+                    c = colour,
+                    label = sample_type)
+    plt.title(var1+ " vs "+ var2)
+    plt.xlabel(var1 + " (min to max)")
+    plt.ylabel(var2 + " (min to max)")
+    plt.legend()
+    plt.show()
+
+pairwise_compare("Lag Time", "AUC")
+
+from pandas.plotting import scatter_matrix
+scatter_matrix(norm_df)
+
+correlation = norm_df.corr()
+
+print(correlation)
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+cax = ax.matshow(correlation, vmin=-1, vmax=1)
+fig.colorbar(cax)
+plt.show()
 
 ### Create dataframe out of result so we can use .describe() later
 ##var_norm_df = pd.DataFrame(data = var_norm, columns = X.columns)
@@ -443,5 +424,5 @@ method = {"file name":0,
 
         
 #plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
-plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx", "SD012/18 FC")
+#plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx", "SD012/18 FC")
 
