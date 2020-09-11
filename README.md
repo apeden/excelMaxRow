@@ -21,11 +21,9 @@ Please contact me (Alex Peden)
 Eric Gazoni, Charlie Clark who created with openpyxl library.
 
 ## Plotting a single RT-QuIC traces selected from a dataframe
-Once a dataframe has been generated from multiple excel files it is possible to use a function called tracePlot to plot a single trace. The trace can be selected by suppling two arguments: the name of the excel file, and the sample label. An example plot is shown below. 
+Once a dataframe has been generated from multiple excel files it is possible to use a function called tracePlot to plot a single trace. The trace can be selected by supplying two arguments: the name of the excel file, and the sample label. An example plot is shown below. 
 
 ![Single trace](https://github.com/apeden/excelMaxRow/blob/master/sing_trace.png)
-
-
 
 
 ## Plotting multiple traces
@@ -57,13 +55,13 @@ In the above example, 9 traces are plotted
 ## Plotting two features on a scattergram
 Using this programme, it is possible to generate a data frame of features and then select two of these features for plotting a scattergram. The following example shows the area under the curve (AUC) plotted against Time to maximum value. The features have been scaled to between 0 (minimum) and 1 (maximum).
 
-
 ![AUC versus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Time%20to%20max.jpeg)
 - blue : positive controls
 - red: blinded positive controls
 - green: negative controls
 - cyan: the test samples
 
+## Plotting a scatter matrix
+It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plotting module this programme. The datapoints in this scattergram are normalised as above. The scatter_matrix provides a convenient way for searching for correlations in the data. 
 
-
-
+![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/example_scatter_matrix.png)
