@@ -65,3 +65,8 @@ Using this programme, it is possible to generate a data frame of features and th
 It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plotting module this programme. The datapoints in this scattergram are normalised as above. The scatter_matrix provides a convenient way for searching for correlations in the data. 
 
 ![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/example_scatter_matrix.png)
+
+## Plotting a correlation heatmap
+Using functions within dataframe and matplotlib it is possible to plot a heat map of pair-wise correlations between variable. Green indicates minimal correlation, yellow is  a positive correlation and blue a negative correlation. 
+
+![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/heat_map.png)
