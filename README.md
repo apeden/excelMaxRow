@@ -61,6 +61,13 @@ Using this programme, it is possible to generate a data frame of features and th
 - green: negative controls
 - cyan: the test samples
 
+Another example, this time of AUC versus lagtime is shown below
+
+![AUC versus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Lag%20Time.jpeg)
+
+## Best features for decriminating positive from negatives
+An important question is what combination of features best discriminates a positive sample from a negative sample. If we restrict the number of features to 6, their are (6(6-1))/2 = 15 pairwise combinations of features, and (6 x 6 x 6) = 216 triplet-wize combinations of features. Using a sextuplet-wize combination of feat
+
 ## Plotting a scatter matrix
 It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plotting module this programme. The datapoints in this scattergram are normalised as above. The scatter_matrix provides a convenient way for searching for correlations in the data. 
 
