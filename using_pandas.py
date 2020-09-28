@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, math
 
-toPrint = False
+toPrint = True
 SEC_PER_CYCLE = 945.6
 #file = "Experimental plan RTQUIC19 003 AHP 65+study cases BATCH 17 and 18.xlsx"
 files = []
@@ -235,7 +235,10 @@ def get_features_df(file):
         if toPrint: print(features_df)
     except:
         print("Problem cleaning row names for ",file,"\n")
-    features_df = features_df.dropna(subset =["Description"])
+    ##features_df = features_df.dropna(subset =["Description"])
+    if toPrint:
+        print("Shape of dataframe", features_df.shape, "\n",
+              "Shape of accompanying numpy array", data_array_2D.shape, "\n")
     return features_df, data_array_2D
     
 def build_master_frame(files):
@@ -325,37 +328,37 @@ method = {"file name":0,
 
 #########  Build master frame   #################################################
                 
-mf = build_master_frame(files)
+##mf = build_master_frame(files)
 
 ##### Reset index ###############################################################
-mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
-
-##### Filter out the positive reactions from the masterframe ####################
-mf.dropna(inplace = True)
-mf = mf[mf.Gradient > 0]
+##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+##mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+##
+####### Filter out the positive reactions from the masterframe ####################
+##mf.dropna(inplace = True)
+##mf = mf[mf.Gradient > 0]
 
 ##### select features for printing: 1= print, 0= don't print ####################
-for_display = []
-for selected in method:
-    if method[selected]:
-        for_display.append(selected)
+##for_display = []
+##for selected in method:
+##    if method[selected]:
+##        for_display.append(selected)
 
 #with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
 #   print("Master dataframe\n========\n", mf)
 
-from sklearn.preprocessing import MinMaxScaler
-####
-mms = MinMaxScaler()
-var_norm = mms.fit_transform(mf[for_display])
-#print("Numpy array of normalised data\n========\n",
-#     var_norm,
-#      "\n",type(var_norm))
-norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
-for category in "Description", "Sample type":
-    norm_df[category] = mf[category].reset_index(drop = True)
-##print("Normalised data frame\n========\n", norm_df)
-print(norm_df.columns)
+##from sklearn.preprocessing import MinMaxScaler
+######
+##mms = MinMaxScaler()
+##var_norm = mms.fit_transform(mf[for_display])
+###print("Numpy array of normalised data\n========\n",
+###     var_norm,
+###      "\n",type(var_norm))
+##norm_df = pd.DataFrame(data = var_norm, columns = mf[for_display].columns)
+##for category in "Description", "Sample type":
+##    norm_df[category] = mf[category].reset_index(drop = True)
+####print("Normalised data frame\n========\n", norm_df)
+##print(norm_df.columns)
 
 def pairwise_compare(var1, var2):
     assert var1 in norm_df.columns
@@ -372,20 +375,20 @@ def pairwise_compare(var1, var2):
     plt.legend()
     plt.show()
 
-pairwise_compare("Lag Time", "AUC")
+##pairwise_compare("AUC", "Lag Time")
 
-from pandas.plotting import scatter_matrix
-scatter_matrix(norm_df)
-
-correlation = norm_df.corr()
-
-print(correlation)
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-cax = ax.matshow(correlation, vmin=-1, vmax=1)
-fig.colorbar(cax)
-plt.show()
+##from pandas.plotting import scatter_matrix
+##scatter_matrix(norm_df)
+##
+##correlation = norm_df.corr()
+##
+##print(correlation)
+##
+##fig = plt.figure()
+##ax = fig.add_subplot(111)
+##cax = ax.matshow(correlation, vmin=-1, vmax=1)
+##fig.colorbar(cax)
+##plt.show()
 
 ### Create dataframe out of result so we can use .describe() later
 ##var_norm_df = pd.DataFrame(data = var_norm, columns = X.columns)
@@ -410,7 +413,6 @@ plt.show()
 ##print(for_array_df_numeric)
 ##print(for_array_df_numeric.T.describe())
 
-
 ##print("Conversion to array \n ",data_array_2D)
 ##labelled_row_data_df = non_nan_df.iloc[1:,0:1]
 ##labelled_row_data_df.rename(columns={'Back to experimental setup': 'Labels'}, inplace = True)
@@ -420,9 +422,7 @@ plt.show()
 ##print(labelled_row_data_df)
 
 #df = df[pd.notnull(df[0])]
-
-
-        
+       
 #plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
-#plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx", "SD012/18 FC")
+plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx", "VV2 pos control FC")
 
