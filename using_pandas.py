@@ -3,14 +3,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, math
 
+toPrint = True
+##for setting NaN lag times to 100
+default_lag = True
 
-toPrint = False
 SEC_PER_CYCLE = 945.6
 num_cycles = 400
 files = []
-basepath = "RTQuIC_for_analysis/"
+basepath = "RTQuIC_comparing_subs/"
 plt.subplots_adjust(wspace = 0.4)
 plt.subplots_adjust(hspace = 0.6)
+
+
+"""data and variables below relevant to 65+ study"""
+##for relabelling duplicate samples
+clean_labels = False
+
+
 
 POSITIVES =(
 "38/07",
@@ -30,6 +39,69 @@ POSITIVES =(
 POS_CONTROLS = "MM1", "VV2", "15.689", "15.692"
 
 NEGATIVES = "MM","MV","VV" "15.32", "15.323", "15.317"
+
+type_colour = {"Blinded positive":"r",
+               "Positive control":"b",
+               "Negative control":"g",
+               "test sample":"y"}
+
+"""data below relevant to the analysis of substrates"""
+
+substrates = {
+#"HS23NM 140211 unseeded":"g",
+##"HS23NM 140211 MM1 seeded":"b",
+#"431 HuM129F9STOP ID50161 unseeded":"g",
+##"431 HuM129F9STOP ID50161 MM1 seeded":"b",
+#"432 HuV129F6STOP ID50162 unseeded":"g",
+"432 HuV129F6STOP ID50162 MM1 seeded":"b",
+#"432 HuV129F11STOP ID204751 unseeded":"g",
+"432 HuV129F11STOP ID204751 MM1 seeded":"b",
+#"200409 HS23NV A unseeded":"g",
+#"200409 HS23NV A MM1 seeded":"b",
+#'Ha Fl PrP "M" unseeded':"g",
+#'Ha Fl PrP "M" MM1 seeded':"b",
+}
+
+substrates2 = {
+##"hs90H(m) 240111 unseeded":"g",
+##"hs90H(m) 240111 MM1 seeded":"b",
+##"hs90H(v) 250111 unseeded":"g",
+##"hs90H(v) 250111 MM1 seeded":"b",
+##"hs90H(M) 260111 unseeded":"g",
+##"hs90H(M) 260111 MM1 seeded":"b",
+##"hs90n(V) 10211 unseeded":"g",
+##"hs90n(V) 10211 MM1 seeded":"b",
+##"Bank vole 501059 F25a unseeded":"g",
+##"Bank vole 501059 F25a MM1 seeded":"b",
+##"Bank vole 501059 F25b unseeded":"g",
+##"Bank vole 501059 F25b MM1 seeded":"b",
+##"432 HuV129F11bSTOP ID204751 17/11/15 unseeded":"g",
+"432 HuV129F11bSTOP ID204751 17/11/15 MM1 seeded":"b",
+##"431 HuM129F13STOP ID204320 10/06/15 unseeded":"g",
+##"431 HuM129F13STOP ID204320 10/06/15 MM1 seeded":"b"
+}
+
+
+subconcs = {
+"HS23NM 140211":(0.52,"M"),
+"431 HuM129F9STOP ID50161":(0.272,"M"),
+"432 HuV129F6STOP ID50162":(0.253,"V"),
+"432 HuV129F11STOP ID204751":(0.252,"V"),
+"200409 HS23NV A":(0.226,"V"),
+"hs90H(m) 240111":(0.416,"M"),
+"hs90H(v) 250111":(0.173,"V"),
+"hs90H(M) 260111":(0.615,"M"),
+"hs90n(V) 10211 unseeded":(0.409,"V"),
+"432 HuV129F11bSTOP ID204751 17/11/15":(0.238,"V"),
+"431 HuM129F13STOP ID204320 10/06/15":(0.186,"M")
+}
+
+
+codon_colour = {"M":"r",
+               "V":"b",
+               }
+
+
 
 with os.scandir(basepath) as entries:
     for entry in entries:
@@ -51,6 +123,8 @@ def getData(file):
         return df
     except FileNotFoundError:
         print("In getData, File ",file," not found")
+    except ValueError:
+        print("Check sheet name")    
     except:
         print("In getData, Couldn't make dataframe using file ",file)
     #if toPrint: print("Original dataframe for ",file,"\n",df)
@@ -58,27 +132,12 @@ def getData(file):
     #df.dropna(how = "any", inplace = True)
     #if toPrint: print("Data frame for ",file," with NaN dropped \n", df)
     
-##def splitNumbers(dataframe):
-##    """split off numeric rtquic data from (equivalently indexed) data labels
-##    Return a 2D array (numeric data) and simple dataframe of labels
-##    """
-##    features_df = dataframe.iloc[:,0:1]
-##    if toPrint: print(features_df)
-##    for_array_df = dataframe.iloc[:,1:401]
-##    try:
-##        data_array_2D = for_array_df.to_numpy()
-##    except:
-##        print("Could not extract numeric data as array")
-##    if toPrint: print(data_array_2D)
-##    return features_df.copy(), data_array_2D.copy() 
-
 def getArray(i, dataframe):
     for_array_df = dataframe.iloc[i,1:num_cycles+1]
     try:
         return for_array_df.to_numpy()
     except:
         print("Could not extract numeric data as array")
-
 
 def threshold_cycle(v, data_array):
     """helper function for finding first cycle where three successive
@@ -107,7 +166,7 @@ def base(i, dataframe):
     return data_array[2]
 
 def base_threshold(i, dataframe):
-    """unlabeled rows are excluded from calculation of base threshold"""
+    #unlabeled rows are excluded from calculation of base threshold
     dataframe_dropna = dataframe.dropna(subset =["Description"])
     return dataframe_dropna["Base"].mean() + 5*dataframe_dropna["Base"].std()
 
@@ -150,8 +209,12 @@ def lagTime(i, dataframe):
         lagtime_sec = threshold_cycle(v, data_array)*SEC_PER_CYCLE
         return round(lagtime_sec/3600, 1)
     except:
-        return np.NaN
-
+        if default_lag:
+            lagtime_sec = num_cycles*SEC_PER_CYCLE
+            return round(lagtime_sec/3600, 1)
+        else:
+            return np.NaN
+        
 def lagVal(i, dataframe):
     data_array = getArray(i, dataframe)
     v = 3* data_array[1]
@@ -230,7 +293,7 @@ def cleanDesc(df):
         except:
             print("Problem cleaning labels at index ",i)
 
-def get_features_df(file, clean_labels = True):
+def get_features_df(file):
     """for excel file of rtquic data,
     Returns a full dataframe of features
     and an associated (and comparably indexed) numpy file of the raw data
@@ -272,7 +335,7 @@ def build_master_frame(files):
             masterframe2 = get_features_df(file)
         except:
             print("Problem building data from ",file)
-        masterframe = pd.concat([masterframe, masterframe2])
+        masterframe = pd.concat([masterframe, masterframe2], sort = False)
     return masterframe
 
 def status(row):
@@ -287,10 +350,15 @@ def status(row):
             return "Negative control"
     return "test sample"
 
-type_colour = {"Blinded positive":"r",
-               "Positive control":"b",
-               "Negative control":"g",
-               "test sample":"y"}
+def add_sub_conc(row):
+    for item in subconcs:
+        if item in row['Description']:
+            return subconcs[item][0]
+
+def add_sub_codon(row):
+    for item in subconcs:
+        if item in row['Description']:
+            return subconcs[item][1]
 
 def get_feat(feature, i, df):
     series = df.columns.get_loc(feature)
@@ -331,7 +399,7 @@ def plot_by_description(file, description_dict):
     df = get_features_df(file) 
     j = 1
     for key, value in description_dict.items():
-        plt.subplot(3, 2, j)
+        plt.subplot(2, 1, j)
         for i in range(df.shape[0]):
             try:
                 if key in get_feat("Description", i, df):
@@ -354,26 +422,12 @@ method = {"file name":0,
           "AUC":1,
           "Base threshold":0,
           "Time to base":0,
-          "Sample type":0}
+          "Sample type":1,
+          "Substrate conc":1,
+          "Substrate codon":1
+          }
 
-#get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
-
-#########  Build master frame   #################################################
-                
-mf = build_master_frame(files)
-
-
-##### Reset index ###############################################################
-##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
-mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
-##
-####### Filter out the positive reactions from the masterframe ####################
-##mf.dropna(inplace = True)
-
-
-
-
-def percentage_positive (num_trials, df):
+def percentage_positive (df):
     percentages = []    
     for i in range(5):
         df_sample = df.sample(replace = True, frac = 0.2)
@@ -387,14 +441,49 @@ def percentage_positive (num_trials, df):
     print("False positive: ",np.mean(percentages),"% +/- ", np.std(percentages))
     return np.mean(percentages), np.std(percentages)
     
-        
+def mean_lagtime (df):
+    """calculates mean of samples that have lagtimes. Those with NaN excluded"""
+    df = df.dropna(subset = ["Lag Time"])
+    print("Mean lagtime: ",df["Lag Time"].mean())
+    print("Std lagtime: ",df["Lag Time"].std())
+    print("n: ",len(df))
+    return df.mean(), df.std()
+
+#get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
+
+#########  Build master frame   #################################################
+                
+mf = build_master_frame(files)
 
 
-num_trials =10
-mf = mf[mf["Sample type"] == "Negative control"]
-with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
-    print(mf.loc[:,["Description","Sample type","Lag Time"]])
-percentage_positive (num_trials, mf)
+##### Reset index ###############################################################
+##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+mf['Substrate conc'] = mf.apply (lambda row: add_sub_conc(row), axis=1)
+mf['Substrate codon'] = mf.apply (lambda row: add_sub_codon(row), axis=1)
+##
+
+
+
+
+####### Filter out the positive reactions from the masterframe ####################
+##mf.dropna(inplace = True)
+##mf = mf[mf["Sample type"] == "Negative control"]
+##mf = mf[mf["Description"].str.contains("Negative")]
+##num_samples = len(mf)
+##print("num samples ", num_samples)
+##mf = mf.dropna(subset =["Lag Time"])
+##num_positives = len(mf[mf["Lag Time"] <=100])
+##print(100*(num_positives/num_samples))
+
+##percentage_positive (mf)
+##mf = mf[mf["Description"].str.contains("200409 HS23NV A MM1 seeded")]
+##mf.drop(mf[mf["Description"] == "MM1 and VV2 FC"].index, inplace = True) 
+##mf.drop(mf[mf["Description"] == "MM1 and VV2 FC repeat"].index, inplace = True) 
+##mean_lagtime (mf)
+
+##with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+##    print(mf.loc[:,["Description","Sample type","Lag Time"]])
 
 
 ##### select features for printing: 1= print, 0= don't print ####################
@@ -403,8 +492,8 @@ for selected in method:
     if method[selected]:
         for_display.append(selected)
 
-##with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-    ##print(mf[for_display])
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
+    print(mf[for_display])
 
 
 ##from sklearn.preprocessing import MinMaxScaler
@@ -435,7 +524,23 @@ def pairwise_compare(var1, var2):
     plt.legend()
     plt.show()
 
-##pairwise_compare("AUC", "Lag Time")
+
+def pairwise_compare_2(var1, var2, df):
+    assert var1 in df.columns
+    assert var2 in df.columns
+    for codon_type, colour in codon_colour.items():
+        subset_df = df.loc[df["Substrate codon"] == codon_type]
+        plt.scatter(subset_df[var1],
+                    subset_df[var2],
+                    c = colour,
+                    label = codon_type)
+    plt.title(var1+ " vs "+ var2)
+    plt.xlabel(var1)
+    plt.ylabel(var2)
+    plt.legend()
+    plt.show()
+
+pairwise_compare_2("Substrate conc", "Lag Time",mf)
 
 ##from pandas.plotting import scatter_matrix
 ##scatter_matrix(norm_df)
@@ -485,12 +590,6 @@ def pairwise_compare(var1, var2):
        
 #plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
 
-##substrates = {"HS23NM 140211 unseeded":"r",
-##              "431 HuM129F9STOP ID50161 unseeded":"b",
-##              "432 HuV129F6STOP ID50162 unseeded":"g",
-##              "432 HuV129F11STOP ID204751 unseeded":"c",
-##              "200409 HS23NV A unseeded":"m",
-##              'Ha Fl PrP "M" unseeded':"y"}
-##
-##plot_by_description("Labeled RTQUIC20 002 partial.xlsx",substrates)
+
+#plot_by_description("RT-QUIC READ 20.004.xlsx",substrates2)
 
