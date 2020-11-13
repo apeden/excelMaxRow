@@ -3,22 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, math
 
-toPrint = True
+toPrint = False
 ##for setting NaN lag times to 100
 default_lag = True
 
 SEC_PER_CYCLE = 945.6
 num_cycles = 400
 files = []
-basepath = "RTQuIC_comparing_subs/"
+basepath = "RTQuIC_for_analysis/"
 plt.subplots_adjust(wspace = 0.4)
 plt.subplots_adjust(hspace = 0.6)
 
 
 """data and variables below relevant to 65+ study"""
 ##for relabelling duplicate samples
-clean_labels = False
-
+clean_labels = True
 
 
 POSITIVES =(
@@ -36,14 +35,24 @@ POSITIVES =(
 "66/13",
 "67/13")
 
-POS_CONTROLS = "MM1", "VV2", "15.689", "15.692"
+M_POS_CONTROLS = "MM1", "15.689", 
+
+V_POS_CONTROLS = "VV2", "15.692"
 
 NEGATIVES = "MM","MV","VV" "15.32", "15.323", "15.317"
 
+pos_control_colour = {"MM1":"r",
+                   "15.689":"r",
+                   "VV2":"b",
+                   "15.692":"b"}
+
 type_colour = {"Blinded positive":"r",
-               "Positive control":"b",
+               "MM1 Positive control":"b",
+               "VV2 Positive control":"m",
                "Negative control":"g",
                "test sample":"y"}
+
+
 
 """data below relevant to the analysis of substrates"""
 
@@ -342,9 +351,12 @@ def status(row):
     for item in POSITIVES:
         if item in row['Description']:
             return "Blinded positive"
-    for item in POS_CONTROLS:
+    for item in M_POS_CONTROLS:
         if item in row['Description']:
-            return "Positive control"    
+            return "MM1 Positive control"
+    for item in V_POS_CONTROLS:
+        if item in row['Description']:
+            return "VV2 Positive control" 
     for item in NEGATIVES:
         if item in row['Description']:
             return "Negative control"
@@ -454,16 +466,17 @@ def mean_lagtime (df):
 #########  Build master frame   #################################################
                 
 mf = build_master_frame(files)
+print(mf)
 
 
 ##### Reset index ###############################################################
 ##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
+
+
+###Additional columns
 mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
 mf['Substrate conc'] = mf.apply (lambda row: add_sub_conc(row), axis=1)
 mf['Substrate codon'] = mf.apply (lambda row: add_sub_codon(row), axis=1)
-##
-
-
 
 
 ####### Filter out the positive reactions from the masterframe ####################
@@ -495,7 +508,6 @@ for selected in method:
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
     print(mf[for_display])
 
-
 ##from sklearn.preprocessing import MinMaxScaler
 ######
 ##mms = MinMaxScaler()
@@ -509,11 +521,11 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):
 ####print("Normalised data frame\n========\n", norm_df)
 ##print(norm_df.columns)
 
-def pairwise_compare(var1, var2):
-    assert var1 in norm_df.columns
-    assert var2 in norm_df.columns
+def pairwise_compare(var1, var2, df):
+    assert var1 in df.columns
+    assert var2 in df.columns
     for sample_type, colour in type_colour.items():
-        subset_df = norm_df.loc[norm_df["Sample type"] == sample_type]
+        subset_df = df.loc[df["Sample type"] == sample_type]
         plt.scatter(subset_df[var1],
                     subset_df[var2],
                     c = colour,
@@ -540,10 +552,25 @@ def pairwise_compare_2(var1, var2, df):
     plt.legend()
     plt.show()
 
-pairwise_compare_2("Substrate conc", "Lag Time",mf)
 
-##from pandas.plotting import scatter_matrix
-##scatter_matrix(norm_df)
+def pairwise_compare_3(var1, var2, df):
+    assert var1 in df.columns
+    assert var2 in df.columns
+    for pos_descr, colour in pos_control_colour.items():
+        subset_df = df.loc[pos_descr in df["Description"]]
+        plt.scatter(subset_df[var1],
+                    subset_df[var2],
+                    c = colour)
+    plt.title(var1+ " vs "+ var2)
+    plt.xlabel(var1)
+    plt.ylabel(var2)
+    plt.legend()
+    plt.show()
+
+pairwise_compare("AUC", "Lag Time",mf)
+
+#from pandas.plotting import scatter_matrix
+#scatter_matrix(norm_df)
 ##
 ##correlation = norm_df.corr()
 ##
