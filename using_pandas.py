@@ -111,7 +111,6 @@ codon_colour = {"M":"r",
                }
 
 
-
 with os.scandir(basepath) as entries:
     for entry in entries:
         try:
@@ -121,6 +120,12 @@ with os.scandir(basepath) as entries:
             print(entry.name, " is apparently a problem file.")
     for file in files:
         print(file)
+
+class RTQuICData(object):
+    def __init__(self, files):
+        self.files = files
+
+
                 
 def getData(file):
     """If possible, return raw dataframe using excel file sheet as input"""
@@ -346,6 +351,11 @@ def build_master_frame(files):
             print("Problem building data from ",file)
         masterframe = pd.concat([masterframe, masterframe2], sort = False)
     return masterframe
+
+
+
+
+
 
 def status(row):
     for item in POSITIVES:
