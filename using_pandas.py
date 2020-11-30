@@ -10,7 +10,7 @@ default_lag = True
 SEC_PER_CYCLE = 945.6
 num_cycles = 400
 files = []
-basepath = "RTQuIC_for_analysis/"
+basepath = "RTQuIC_comparing_subs/"
 plt.subplots_adjust(wspace = 0.4)
 plt.subplots_adjust(hspace = 0.6)
 
@@ -59,16 +59,16 @@ type_colour = {"Blinded positive":"r",
 substrates = {
 #"HS23NM 140211 unseeded":"g",
 ##"HS23NM 140211 MM1 seeded":"b",
-#"431 HuM129F9STOP ID50161 unseeded":"g",
+##"431 HuM129F9STOP ID50161 unseeded":"g",
 ##"431 HuM129F9STOP ID50161 MM1 seeded":"b",
 #"432 HuV129F6STOP ID50162 unseeded":"g",
-"432 HuV129F6STOP ID50162 MM1 seeded":"b",
-#"432 HuV129F11STOP ID204751 unseeded":"g",
-"432 HuV129F11STOP ID204751 MM1 seeded":"b",
-#"200409 HS23NV A unseeded":"g",
-#"200409 HS23NV A MM1 seeded":"b",
-#'Ha Fl PrP "M" unseeded':"g",
-#'Ha Fl PrP "M" MM1 seeded':"b",
+##"432 HuV129F6STOP ID50162 MM1 seeded":"b",
+##"432 HuV129F11STOP ID204751 unseeded":"g",
+##"432 HuV129F11STOP ID204751 MM1 seeded":"b",
+##"200409 HS23NV A unseeded":"g",
+"200409 HS23NV A MM1 seeded":"b",
+##'Ha Fl PrP "M" unseeded':"g",
+##'Ha Fl PrP "M" MM1 seeded':"b",
 }
 
 substrates2 = {
@@ -92,17 +92,17 @@ substrates2 = {
 
 
 subconcs = {
-"HS23NM 140211":(0.52,"M"),
-"431 HuM129F9STOP ID50161":(0.272,"M"),
-"432 HuV129F6STOP ID50162":(0.253,"V"),
-"432 HuV129F11STOP ID204751":(0.252,"V"),
+"HS23NM 140211 unseeded":(0.52,"M"),
+"431 HuM129F9STOP ID50161 unseeded":(0.272,"M"),
+"432 HuV129F6STOP ID50162 unseeded":(0.253,"V"),
+"432 HuV129F11STOP ID204751 unseeded":(0.252,"V"),
 "200409 HS23NV A":(0.226,"V"),
-"hs90H(m) 240111":(0.416,"M"),
-"hs90H(v) 250111":(0.173,"V"),
-"hs90H(M) 260111":(0.615,"M"),
+"hs90H(m) 240111 unseeded":(0.416,"M"),
+"hs90H(v) 250111 unseeded":(0.173,"V"),
+"hs90H(M) 260111 unseeded":(0.615,"M"),
 "hs90n(V) 10211 unseeded":(0.409,"V"),
-"432 HuV129F11bSTOP ID204751 17/11/15":(0.238,"V"),
-"431 HuM129F13STOP ID204320 10/06/15":(0.186,"M")
+"432 HuV129F11bSTOP ID204751 17/11/15 unseeded":(0.238,"V"),
+"431 HuM129F13STOP ID204320 10/06/15 unseeded":(0.186,"M")
 }
 
 
@@ -567,7 +567,7 @@ def pairwise_compare_3(var1, var2, df):
     plt.legend()
     plt.show()
 
-pairwise_compare("AUC", "Lag Time",mf)
+pairwise_compare_2( "Substrate conc", "Lag Time", mf)
 
 #from pandas.plotting import scatter_matrix
 #scatter_matrix(norm_df)
@@ -618,5 +618,5 @@ pairwise_compare("AUC", "Lag Time",mf)
 #plotTrace("Experimental plan RTQUIC18 008 AHP 65+study cases SD 012 18 BATCH 6 and 7 MARCELO FLY.xlsx")
 
 
-#plot_by_description("RT-QUIC READ 20.004.xlsx",substrates2)
+##plot_by_description("RT-QUIC READ 20.003.xlsx",substrates)
 
