@@ -6,11 +6,11 @@ import os, math
 toPrint = False
 ##for setting NaN lag times to 100
 default_lag = True
-
+basepath = "RTQuIC_for_analysis/"
 SEC_PER_CYCLE = 945.6
 num_cycles = 400
 files = []
-basepath = "RTQuIC_comparing_subs/"
+
 plt.subplots_adjust(wspace = 0.4)
 plt.subplots_adjust(hspace = 0.6)
 
@@ -122,371 +122,628 @@ with os.scandir(basepath) as entries:
         print(file)
 
 class RTQuICData(object):
-    def __init__(self, files):
-        self.files = files
-
-
-                
-def getData(file):
-    """If possible, return raw dataframe using excel file sheet as input"""
-    try:
-        df = pd.read_excel(basepath+file,
-                           sheet_name='Results',
-                           skiprows = 10,
-                           usecols='A,N:OW')
-        return df
-    except FileNotFoundError:
-        print("In getData, File ",file," not found")
-    except ValueError:
-        print("Check sheet name")    
-    except:
-        print("In getData, Couldn't make dataframe using file ",file)
-    #if toPrint: print("Original dataframe for ",file,"\n",df)
-        #delete all rows with NaN in second column
-    #df.dropna(how = "any", inplace = True)
-    #if toPrint: print("Data frame for ",file," with NaN dropped \n", df)
+    basepath = "RTQuIC_for_analysis/"
+    sheet_name = "All Cycles"
+    skiprows = 10,
+    usecols='A,N:OW'
     
-def getArray(i, dataframe):
-    for_array_df = dataframe.iloc[i,1:num_cycles+1]
-    try:
-        return for_array_df.to_numpy()
-    except:
-        print("Could not extract numeric data as array")
-
-def threshold_cycle(v, data_array):
-    """helper function for finding first cycle where three successive
-    cycles give flourescence values greater than a given value v
-    """
-    for c in range(len(data_array)-2):        
-        if (data_array[c] > v
-            and data_array[c+1] > v
-            and data_array[c+2] > v):
-            return c
-
-"""Below are methods for calculating features"""
-def maxVal(i, dataframe):
-    data_array = getArray(i, dataframe)
-    try:
-        return np.amax(data_array)
-    except:
-        return np.NaN
-    
-def _75maxVal(i, dataframe):
-    """for calculating value that is 75% max"""
-    return 0.75*maxVal(i, dataframe)
-
-def base(i, dataframe):
-    data_array = getArray(i, dataframe)
-    return data_array[2]
-
-def base_threshold(i, dataframe):
-    #unlabeled rows are excluded from calculation of base threshold
-    dataframe_dropna = dataframe.dropna(subset =["Description"])
-    return dataframe_dropna["Base"].mean() + 5*dataframe_dropna["Base"].std()
+    def __init__(self, excelfile):
+        self.file = excelfile
+        self.file_name = excelfile.__str__()
+        self.df = None
+        self.setData()
+        
+    def get_df(self):
+        return self.df
+    def setData(self):
+        """If possible, return raw dataframe using excel file sheet as input"""
+        try:
+            self.df = pd.read_excel(RTQuICData.basepath + self.file,
+                               RTQuICData.sheet_name,
+                               RTQuICData.skiprows)
+        except FileNotFoundError:
+            print("In getData, File ",self.file," not found")
+            self.df = None
+        except ValueError:
+            print("Check sheet name")
+            self.df = None
+        except:
+            print("In getData, Couldn't make dataframe using file ",file)
+            self.df = None
+    def getData(self):
+        return self.df
+    def __str__(self):
+        string  = "\n=============\n"   
+        string += self.file_name +"\n=============\n"+ self.df.__str__()
+        return string
 
 
-def time_to_base(i, dataframe):
-    data_array = getArray(i, dataframe)
-    base_cyc = threshold_cycle(base_threshold(i, dataframe),
-                                         data_array)
-    try:
-        base_start = base_cyc*SEC_PER_CYCLE
-        base_start /= 3600
-        return base_start
-    except:
-        return np.NaN
 
+class RTQuICData_feat(RTQuICData):
+    def __init__(self, excelfile, start_row_col  = (1, 3),
+                 numCycles = 400, SEC_PER_CYCLE = 945.6):
+        super().__init__(excelfile)
+        self.start_row, self.start_col = start_row_col
+        self.numCyles = numCycles
+        self.SEC_PER_CYCLE = 945.6
+        self.da = None
+        self.setArray()
 
-def timeToMax(i, dataframe):
-    """in hours"""
-    data_array = getArray(i, dataframe)
-    time_to_max = np.argmax(data_array)*SEC_PER_CYCLE
-    if not time_to_base(i, dataframe) == np.NaN:
-        return round(time_to_max/3600, 1)
-    else:
-        return np.NaN
-    
-def timeTo75Max(i, dataframe):
-    """in hours"""
-    _75max = _75maxVal(i, dataframe)
-    data_array = getArray(i, dataframe)
-    time_to_0_75_max = np.argmax(data_array > _75max)*SEC_PER_CYCLE
-    if not time_to_base(i, dataframe) == np.NaN:
-        return round(time_to_0_75_max/3600, 1)
-    else:
-        return np.NaN
+    def setArray(self):
+        try:
+            self.da = self.df.iloc[self.start_row:,
+                                self.start_col:self.start_col +\
+                                num_cycles+ 1 ]
+        except:
+            print("Could not extract numeric data as array")
+            self.da = None
+            
+    def getArray(self):
+        return self.da
 
-def lagTime(i, dataframe):
-    data_array = getArray(i, dataframe)
-    v = 3* data_array[1]
-    try:
-        lagtime_sec = threshold_cycle(v, data_array)*SEC_PER_CYCLE
-        return round(lagtime_sec/3600, 1)
-    except:
-        if default_lag:
-            lagtime_sec = num_cycles*SEC_PER_CYCLE
-            return round(lagtime_sec/3600, 1)
+    def threshold_cycle(self, i, v):
+        """helper function for finding first cycle where three successive
+        cycles give flourescence values greater than a given value v
+        """
+        for c in range(len(self.da[i])-2):        
+            if (self.da[i][c] > v
+                and self.da[i][c+1] > v
+                and self.da[i][c+2] > v):
+                return c
+
+    """Below are methods for calculating features"""
+    def maxVal(self, i):
+        try:
+            return np.amax(self.da[i])
+        except:
+            return np.NaN
+        
+    def _75maxVal(self, i):
+        """for calculating value that is 75% max"""
+        return 0.75*self.maxVal(i)
+
+    def base(self, i):
+        return self.da[i][2]
+
+    def base_threshold(self, i):
+        return self.df["Base"].mean() + 5*self.df["Base"].std()
+
+    def time_to_base(self, i):
+        base_cyc = self.threshold_cycle(i, self.base_threshold(i))
+        try:
+            base_start = base_cyc*SEC_PER_CYCLE
+            base_start /= 3600
+            return base_start
+        except:
+            return np.NaN
+
+    def timeToMax(self, i):
+        """in hours"""
+        time_to_max = np.argmax(self.da[i])*SEC_PER_CYCLE
+        if not self.time_to_base(i) == np.NaN:
+            return round(time_to_max/3600, 1)
         else:
             return np.NaN
         
-def lagVal(i, dataframe):
-    data_array = getArray(i, dataframe)
-    v = 3* data_array[1]
-    c = threshold_cycle(v, data_array)
-    if c != None:
-        return data_array[c]
-    else:
-        return np.NaN
+    def timeTo75Max(self, i):
+        """in hours"""
+        _75max = self._75maxVal(i)
+        time_to_0_75_max = np.argmax(self.da[i] > _75max)*SEC_PER_CYCLE
+        if not self.time_to_base(i) == np.NaN:
+            return round(time_to_0_75_max/3600, 1)
+        else:
+            return np.NaN
+
+    def lagTime(self, i):
+        v = 3* self.da[i][1]
+        try:
+            lagtime_sec = self.threshold_cycle(i, v)*SEC_PER_CYCLE
+            return round(lagtime_sec/3600, 1)
+        except:
+            if default_lag:
+                lagtime_sec = num_cycles*SEC_PER_CYCLE
+                return round(lagtime_sec/3600, 1)
+            else:
+                return np.NaN
+            
+    def lagVal(self, i):
+        v = 3* self.da[1]
+        c = self.threshold_cycle(v)
+        if c != None:
+            return self.da[c]
+        else:
+            return np.NaN
+            
+    def areaUnderCurve(self, i):
+        val_above_baseline = self.da - self.base_threshold(i)
+        area = val_above_baseline.sum()
+        if area > 0:
+            return area
+        else:
+            return 0.0
+
+    def gradient(self, i):
+        """calculated as increase in fluorescence units
+        per unit time (in hours)
+        between the baseline and the 75% max val
+        """
+        min_ = self.base_threshold(i)
+        max_ = self._75maxVal(i)
+        gradient_start_cyc = self.threshold_cycle(min_)
+        gradient_end_val = max_
+        gradient_end_cyc = self.threshold_cycle(max_)
+        #print("gradient start flouresence" ,gradient_start_val)
+        #print("gradient start cycle"       ,gradient_start_cyc)
+        #print("gradient end flouresence"   ,gradient_end_val)
+        #print("gradient end cycle"   ,gradient_end_cyc)
+        try:
+            gradient = (max_ - min_)/(gradient_end_cyc - gradient_start_cyc)
+        except:
+            return np.NaN
+        gradient /= SEC_PER_CYCLE
+        gradient *= 3600
+        return round(gradient, 1)   
+       
+    method_dict = {"Base":base,
+                   "Base threshold":base_threshold,
+                   "Max Val": maxVal,
+                   "Time to Max": timeToMax,
+                   "Time to 75% max": timeTo75Max,
+                   "Lag Time": lagTime,
+                   "Lag Val": lagVal,
+                   "Gradient": gradient,
+                   "AUC": areaUnderCurve,
+                   "Time to base": time_to_base}
+
+    def addColumn(self, method_name):
+        self.df[method_name] = np.NaN
+        col_index = self.df.columns.get_loc(method_name)
+        for i in range(0, self.df.shape[0]):
+            self.getArray(i)
+            value = RTQuICData.method_dict[method_name](self, i)
+            self.df.iat[i, col_index] = value
+
+    def addFileTag(self, file):
+        self.df["file name"] = file
         
-def areaUnderCurve(i, dataframe):
-    data_array = getArray(i, dataframe)
-    baseline = base_threshold(i, dataframe)
-    val_above_baseline = data_array - baseline
-    area = val_above_baseline.sum()
-    if area > 0:
-        return area
-    else:
-        return 0.0
+    def cleanDesc(self):
+        """ modify df to create correct unique descriptions
+        of the duplicate rows (assuming duplicates are used)
+        """    
+        for i in range(0, len(self.df)-1, 2):
+            ##try:
+            ##if not pd.isnull(self.df.iat[i+1,0]):
+            self.df.iat[i,0] = str(self.df.iat[i,0]) + " " + str(self.df.iat[i+1,0])
+            self.df.iat[i+1,0] = str(self.df.iat[i,0]) + " repeat"
+            ##except:
+              ##  print("Problem cleaning labels at index ",i)
 
-def gradient(i, dataframe):
-    """calculated as increase in fluorescence units
-    per unit time (in hours)
-    between the baseline and the 75% max val
-    """
-    data_array = getArray(i, dataframe)
-    min_ = base_threshold(i, dataframe)
-    max_ = _75maxVal(i, dataframe)
-    gradient_start_val = min_
-    gradient_start_cyc = threshold_cycle(gradient_start_val, data_array)
-    gradient_end_val = max_
-    gradient_end_cyc = threshold_cycle(gradient_end_val, data_array)
-    #print("gradient start flouresence" ,gradient_start_val)
-    #print("gradient start cycle"       ,gradient_start_cyc)
-    #print("gradient end flouresence"   ,gradient_end_val)
-    #print("gradient end cycle"   ,gradient_end_cyc)
-    try:
-        gradient = (gradient_end_val - gradient_start_val)/(gradient_end_cyc - gradient_start_cyc)
-    except:
-        return np.NaN
-    gradient /= SEC_PER_CYCLE
-    gradient *= 3600
-    return round(gradient, 1)   
-   
-method_dict = { "Base":base,
-                "Base threshold":base_threshold,
-                "Max Val": maxVal,
-                "Time to Max": timeToMax,
-                "Time to 75% max": timeTo75Max,
-                "Lag Time": lagTime,
-                "Lag Val": lagVal,
-                "Gradient": gradient,
-                "AUC": areaUnderCurve,
-                "Time to base": time_to_base}
-
-def addColumn(method_name, method_dict, dataframe):
-    dataframe[method_name] = np.NaN
-    col_index = dataframe.columns.get_loc(method_name)
-    for i in range(0,dataframe.shape[0]):
-        value = method_dict[method_name](i, dataframe)
-        dataframe.iat[i, col_index] = value
-    return dataframe
-
-def addFileTag(dataframe, file):
-    dataframe["file name"] = file
-    return dataframe
-    
-def cleanDesc(df):
-    """ modify df to create correct unique descriptions
-    of the duplicate rows (assuming duplicates are used)
-    """    
-    for i in range(0, len(df)-1, 2):
+    def get_features_df(self,file):
+        """for excel file of rtquic data,
+        Returns a full dataframe of features
+        and an associated (and comparably indexed) numpy file of the raw data
+        """
+        self.getData(file)
         try:
-            if not pd.isnull(df.iat[i+1,0]):
-                df.iat[i,0] = str(df.iat[i,0]) + " " + str(df.iat[i+1,0])
-            df.iat[i+1,0] = str(df.iat[i,0]) + " repeat"
+            self.df.columns = self.df.iloc[0]
         except:
-            print("Problem cleaning labels at index ",i)
-
-def get_features_df(file):
-    """for excel file of rtquic data,
-    Returns a full dataframe of features
-    and an associated (and comparably indexed) numpy file of the raw data
-    """
-    df = getData(file)
-    try:
-        df.columns = df.iloc[0]
-    except:
-        print("Couldn't set columns for ",file)
-    df.drop(df.index[0], inplace = True)    
-    df = df[df.Description != 0]
-    if toPrint: print("Basic dataframe for ",file,"\n",df)
-    for method_name in method_dict:
-        addColumn(method_name, method_dict, df)
-    try:
-        addFileTag(df, file)
-    except:
-        print("problem tagging filename ", file) 
-    if clean_labels:
+            print("Couldn't set columns for ",file)
+        self.df.drop(self.df.index[0], inplace = True)    
+        self.df = self.df[self.df.Description != 0]
+        if toPrint: print("Basic dataframe for ",file,"\n",self.df)
+        for method_name in RTQuICData.method_dict:
+            self.addColumn(method_name)
         try:
-            cleanDesc(df)
-            if toPrint: print(df)
+            self.addFileTag(file)
         except:
-            print("Problem cleaning row names for ",file,"\n")
-    df = df.dropna(subset =["Description"])
-    if clean_labels:
-        df = df.loc[df['Description'] != "nan repeat"]
-    if toPrint:
-        print("Shape of dataframe", df.shape, "\n")
-    df = df.replace([np.inf, -np.inf], np.nan)
-    return df
-    
-def build_master_frame(files):
-    masterframe = None
-    masterframe = get_features_df(files[0])  
-    for file in files[1:]:     
-        masterframe2 = None
-        try:
-            masterframe2 = get_features_df(file)
-        except:
-            print("Problem building data from ",file)
-        masterframe = pd.concat([masterframe, masterframe2], sort = False)
-    return masterframe
-
-
-
-
-
-
-def status(row):
-    for item in POSITIVES:
-        if item in row['Description']:
-            return "Blinded positive"
-    for item in M_POS_CONTROLS:
-        if item in row['Description']:
-            return "MM1 Positive control"
-    for item in V_POS_CONTROLS:
-        if item in row['Description']:
-            return "VV2 Positive control" 
-    for item in NEGATIVES:
-        if item in row['Description']:
-            return "Negative control"
-    return "test sample"
-
-def add_sub_conc(row):
-    for item in subconcs:
-        if item in row['Description']:
-            return subconcs[item][0]
-
-def add_sub_codon(row):
-    for item in subconcs:
-        if item in row['Description']:
-            return subconcs[item][1]
-
-def get_feat(feature, i, df):
-    series = df.columns.get_loc(feature)
-    return df.iat[i, series]
-
-def singlePlot(i, df, description = None, color = None, labels = True, parameters = False,):
-    """helper function for tracing plots"""
-    data_array = getArray(i, df)
-    hours_per_cycle = SEC_PER_CYCLE/3600
-    x_vals = [x*hours_per_cycle for x in range(1, num_cycles+1)]
-    plt.plot(x_vals, data_array, color)
-    if parameters:
-        gradient = get_feat("Gradient",i,df)
-        gradient_start = get_feat("Time to base",i,df)
-        gradient_base = base_threshold(i, df)
-        plt.plot(x_vals, [((x*gradient)+ gradient_base) for x in (x_vals - gradient_start)], label = "Gradient")      
-        parameters = (("Max Val","r"), ("Base threshold","g"), ("Lag Val","b"))
-        for parameter, c, in parameters:
-            plt.axhline(get_feat(parameter,i,df), color = c, label = parameter)
-        plt.legend()
-    plt.ylim(0,275000)
-    plt.xlim(0,(100*(num_cycles/400)))
-    if labels:
-        plt.title(description)           
-        plt.ylabel("Flourescence Units")
-        plt.xlabel("Time (hours)")
-
-def plot_all_trace(file): 
-    df = get_features_df(file)
-    num_traces = df.shape[0]       
-    for i in range(0, num_traces-9, 4):
-        for j in range(9):
-            plt.subplot(3, 3, j+1)
-            singlePlot(i+j, df, description, color, labels = False)
-        plt.show()
-
-def plot_by_description(file, description_dict):    
-    df = get_features_df(file) 
-    j = 1
-    for key, value in description_dict.items():
-        plt.subplot(2, 1, j)
-        for i in range(df.shape[0]):
+            print("problem tagging filename ", file) 
+        if clean_labels:
+            ##try:
+            self.cleanDesc()
+            if toPrint: print(self.df)
+            ##except:
+                ##print("Problem cleaning row names for ",file,"\n")
+        self.df = self.df.dropna(subset =["Description"])
+        if clean_labels:
+            self.df = self.df.loc[self.df['Description'] != "nan nan repeat"]
+            self.df = self.df.loc[self.df['Description'] != "nan nan"]
+        if toPrint:
+            print("Shape of dataframe", self.df.shape, "\n")
+        self.df = self.df.replace([np.inf, -np.inf], np.nan)
+        
+    def build_master_frame(self, files):
+        self.get_features_df(self.files[0]) 
+        self.mf = self.df
+        self.df = None
+        for file in self.files[1:]:     
+            masterframe2 = None
             try:
-                if key in get_feat("Description", i, df):
-                    singlePlot(i, df, key, color = value)
-                    print("plot for ", get_feat("Description", i, df))
-            except TypeError:
-                print("This for description in excel column",get_feat("Description", i, df))
-        j += 1
-    plt.show()
+                self.get_features_df(file)
+            except:
+                print("Problem building data from ",file)
+            self.mf = pd.concat([self.mf, self.df], sort = False)
 
-method = {"file name":0,
-          "Description":1,
-          "Base":0,
-          "Max Val":1,
-          "Time to Max":1,
-          "Time to 75% max":0,
-          "Lag Time":1,
-          "Lag Val":1,
-          "Gradient":1,
-          "AUC":1,
-          "Base threshold":0,
-          "Time to base":0,
-          "Sample type":1,
-          "Substrate conc":1,
-          "Substrate codon":1
-          }
 
-def percentage_positive (df):
-    percentages = []    
-    for i in range(5):
-        df_sample = df.sample(replace = True, frac = 0.2)
-        num_samples = len(df_sample)
-        print("num samples ", num_samples)
-        df_sample = df_sample.dropna(subset =["Lag Time"])
-        num_positives = len(df_sample[df_sample["Lag Time"] <=100])
-        print("num_positives ", num_positives)
-        percentages.append(100*(num_positives/num_samples))
-    print(percentages)
-    print("False positive: ",np.mean(percentages),"% +/- ", np.std(percentages))
-    return np.mean(percentages), np.std(percentages)
-    
-def mean_lagtime (df):
-    """calculates mean of samples that have lagtimes. Those with NaN excluded"""
-    df = df.dropna(subset = ["Lag Time"])
-    print("Mean lagtime: ",df["Lag Time"].mean())
-    print("Std lagtime: ",df["Lag Time"].std())
-    print("n: ",len(df))
-    return df.mean(), df.std()
+class RTQuICData_feat_65(RTQuICData):
+    def __init__(self, excelfile, start_row_col  = (1, 3),
+                 numCycles = 400, SEC_PER_CYCLE = 945.6):
+        super().__init__(excelfile, start_row_col  = (1, 3),
+                 numCycles = 400, SEC_PER_CYCLE = 945.6)
+
+
+    def base_threshold(self, i):
+        #unlabeled rows are excluded from calculation of base threshold
+        df_dropna = self.df.dropna(subset =["Description"])
+        return df_dropna["Base"].mean() + 5*df_dropna["Base"].std()
+
+
+
+
+
+myResults = RTQuICData_feat(files[17])
+myResults.setArray()
+print(myResults.getArray())
+
+##class RTQuICData(object):
+##    def __init__(self, files):
+##        self.files = files
+##        self.df = None ##will be a dataframe
+##        self.da = None ##will be a dataarray
+##        self.mf = None ##will be a masterframe
+##        self.build_master_frame(files)
+##                  
+##    def getMasterFrame(self):
+##        return self.mf
+##
+##    def getData(self, file):
+##        """If possible, return raw dataframe using excel file sheet as input"""
+##        try:
+##            self.df = pd.read_excel(basepath+file,
+##                               sheet_name='Results',
+##                               skiprows = 10,
+##                               usecols='A,N:OW')
+##        except FileNotFoundError:
+##            print("In getData, File ",file," not found")
+##            self.df = None
+##        except ValueError:
+##            print("Check sheet name")
+##            self.df = None
+##        except:
+##            print("In getData, Couldn't make dataframe using file ",file)
+##            self.df = None
+##        #if toPrint: print("Original dataframe for ",file,"\n",self.df)
+##            #delete all rows with NaN in second column
+##        #self.df.dropna(how = "any", inplace = True)
+##        #if toPrint: print("Data frame for ",file," with NaN dropped \n", self.df)
+##        
+##    def getArray(self, i):
+##        for_array_df = self.df.iloc[i,1:num_cycles+1]
+##        try:
+##            self.da = for_array_df.to_numpy()
+##        except:
+##            print("Could not extract numeric data as array")
+##            self.da = None
+##
+##    def threshold_cycle(self, v):
+##        """helper function for finding first cycle where three successive
+##        cycles give flourescence values greater than a given value v
+##        """
+##        for c in range(len(self.da)-2):        
+##            if (self.da[c] > v
+##                and self.da[c+1] > v
+##                and self.da[c+2] > v):
+##                return c
+##
+##    """Below are methods for calculating features"""
+##    def maxVal(self, i):
+##        try:
+##            return np.amax(self.da)
+##        except:
+##            return np.NaN
+##        
+##    def _75maxVal(self, i):
+##        """for calculating value that is 75% max"""
+##        return 0.75*self.maxVal(i)
+##
+##    def base(self, i):
+##        return self.da[2]
+##
+##    def base_threshold(self, i):
+##        #unlabeled rows are excluded from calculation of base threshold
+##        df_dropna = self.df.dropna(subset =["Description"])
+##        return df_dropna["Base"].mean() + 5*df_dropna["Base"].std()
+##
+##    def time_to_base(self, i):
+##        base_cyc = self.threshold_cycle(self.base_threshold(i))
+##        try:
+##            base_start = base_cyc*SEC_PER_CYCLE
+##            base_start /= 3600
+##            return base_start
+##        except:
+##            return np.NaN
+##
+##    def timeToMax(self, i):
+##        """in hours"""
+##        time_to_max = np.argmax(self.da)*SEC_PER_CYCLE
+##        if not self.time_to_base(i) == np.NaN:
+##            return round(time_to_max/3600, 1)
+##        else:
+##            return np.NaN
+##        
+##    def timeTo75Max(self, i):
+##        """in hours"""
+##        _75max = self._75maxVal(i)
+##        time_to_0_75_max = np.argmax(self.da > _75max)*SEC_PER_CYCLE
+##        if not self.time_to_base(i) == np.NaN:
+##            return round(time_to_0_75_max/3600, 1)
+##        else:
+##            return np.NaN
+##
+##    def lagTime(self, i):
+##        v = 3* self.da[1]
+##        try:
+##            lagtime_sec = self.threshold_cycle(v, self.da)*SEC_PER_CYCLE
+##            return round(lagtime_sec/3600, 1)
+##        except:
+##            if default_lag:
+##                lagtime_sec = num_cycles*SEC_PER_CYCLE
+##                return round(lagtime_sec/3600, 1)
+##            else:
+##                return np.NaN
+##            
+##    def lagVal(self, i):
+##        v = 3* self.da[1]
+##        c = self.threshold_cycle(v)
+##        if c != None:
+##            return self.da[c]
+##        else:
+##            return np.NaN
+##            
+##    def areaUnderCurve(self, i):
+##        val_above_baseline = self.da - self.base_threshold(i)
+##        area = val_above_baseline.sum()
+##        if area > 0:
+##            return area
+##        else:
+##            return 0.0
+##
+##    def gradient(self, i):
+##        """calculated as increase in fluorescence units
+##        per unit time (in hours)
+##        between the baseline and the 75% max val
+##        """
+##        min_ = self.base_threshold(i)
+##        max_ = self._75maxVal(i)
+##        gradient_start_cyc = self.threshold_cycle(min_)
+##        gradient_end_val = max_
+##        gradient_end_cyc = self.threshold_cycle(max_)
+##        #print("gradient start flouresence" ,gradient_start_val)
+##        #print("gradient start cycle"       ,gradient_start_cyc)
+##        #print("gradient end flouresence"   ,gradient_end_val)
+##        #print("gradient end cycle"   ,gradient_end_cyc)
+##        try:
+##            gradient = (max_ - min_)/(gradient_end_cyc - gradient_start_cyc)
+##        except:
+##            return np.NaN
+##        gradient /= SEC_PER_CYCLE
+##        gradient *= 3600
+##        return round(gradient, 1)   
+##       
+##    method_dict = {"Base":base,
+##                   "Base threshold":base_threshold,
+##                   "Max Val": maxVal,
+##                   "Time to Max": timeToMax,
+##                   "Time to 75% max": timeTo75Max,
+##                   "Lag Time": lagTime,
+##                   "Lag Val": lagVal,
+##                   "Gradient": gradient,
+##                   "AUC": areaUnderCurve,
+##                   "Time to base": time_to_base}
+##
+##    def addColumn(self, method_name):
+##        self.df[method_name] = np.NaN
+##        col_index = self.df.columns.get_loc(method_name)
+##        for i in range(0, self.df.shape[0]):
+##            self.getArray(i)
+##            value = RTQuICData.method_dict[method_name](self, i)
+##            self.df.iat[i, col_index] = value
+##
+##    def addFileTag(self, file):
+##        self.df["file name"] = file
+##        
+##    def cleanDesc(self):
+##        """ modify df to create correct unique descriptions
+##        of the duplicate rows (assuming duplicates are used)
+##        """    
+##        for i in range(0, len(self.df)-1, 2):
+##            ##try:
+##            ##if not pd.isnull(self.df.iat[i+1,0]):
+##            self.df.iat[i,0] = str(self.df.iat[i,0]) + " " + str(self.df.iat[i+1,0])
+##            self.df.iat[i+1,0] = str(self.df.iat[i,0]) + " repeat"
+##            ##except:
+##              ##  print("Problem cleaning labels at index ",i)
+##
+##    def get_features_df(self,file):
+##        """for excel file of rtquic data,
+##        Returns a full dataframe of features
+##        and an associated (and comparably indexed) numpy file of the raw data
+##        """
+##        self.getData(file)
+##        try:
+##            self.df.columns = self.df.iloc[0]
+##        except:
+##            print("Couldn't set columns for ",file)
+##        self.df.drop(self.df.index[0], inplace = True)    
+##        self.df = self.df[self.df.Description != 0]
+##        if toPrint: print("Basic dataframe for ",file,"\n",self.df)
+##        for method_name in RTQuICData.method_dict:
+##            self.addColumn(method_name)
+##        try:
+##            self.addFileTag(file)
+##        except:
+##            print("problem tagging filename ", file) 
+##        if clean_labels:
+##            ##try:
+##            self.cleanDesc()
+##            if toPrint: print(self.df)
+##            ##except:
+##                ##print("Problem cleaning row names for ",file,"\n")
+##        self.df = self.df.dropna(subset =["Description"])
+##        if clean_labels:
+##            self.df = self.df.loc[self.df['Description'] != "nan nan repeat"]
+##            self.df = self.df.loc[self.df['Description'] != "nan nan"]
+##        if toPrint:
+##            print("Shape of dataframe", self.df.shape, "\n")
+##        self.df = self.df.replace([np.inf, -np.inf], np.nan)
+##        
+##    def build_master_frame(self, files):
+##        self.get_features_df(self.files[0]) 
+##        self.mf = self.df
+##        self.df = None
+##        for file in self.files[1:]:     
+##            masterframe2 = None
+##            try:
+##                self.get_features_df(file)
+##            except:
+##                print("Problem building data from ",file)
+##            self.mf = pd.concat([self.mf, self.df], sort = False)
+##
+##def status(row):
+##    for item in POSITIVES:
+##        if item in row['Description']:
+##            return "Blinded positive"
+##    for item in M_POS_CONTROLS:
+##        if item in row['Description']:
+##            return "MM1 Positive control"
+##    for item in V_POS_CONTROLS:
+##        if item in row['Description']:
+##            return "VV2 Positive control" 
+##    for item in NEGATIVES:
+##        if item in row['Description']:
+##            return "Negative control"
+##    return "test sample"
+##
+##def add_sub_conc(row):
+##    for item in subconcs:
+##        if item in row['Description']:
+##            return subconcs[item][0]
+##
+##def add_sub_codon(row):
+##    for item in subconcs:
+##        if item in row['Description']:
+##            return subconcs[item][1]
+##
+##def get_feat(feature, i, df):
+##    series = df.columns.get_loc(feature)
+##    return df.iat[i, series]
+##
+##def singlePlot(i, df, description = None, color = None, labels = True, parameters = False,):
+##    """helper function for tracing plots"""
+##    data_array = getArray(i, df)
+##    hours_per_cycle = SEC_PER_CYCLE/3600
+##    x_vals = [x*hours_per_cycle for x in range(1, num_cycles+1)]
+##    plt.plot(x_vals, data_array, color)
+##    if parameters:
+##        gradient = get_feat("Gradient",i,df)
+##        gradient_start = get_feat("Time to base",i,df)
+##        gradient_base = base_threshold(i, df)
+##        plt.plot(x_vals, [((x*gradient)+ gradient_base) for x in (x_vals - gradient_start)], label = "Gradient")      
+##        parameters = (("Max Val","r"), ("Base threshold","g"), ("Lag Val","b"))
+##        for parameter, c, in parameters:
+##            plt.axhline(get_feat(parameter,i,df), color = c, label = parameter)
+##        plt.legend()
+##    plt.ylim(0,275000)
+##    plt.xlim(0,(100*(num_cycles/400)))
+##    if labels:
+##        plt.title(description)           
+##        plt.ylabel("Flourescence Units")
+##        plt.xlabel("Time (hours)")
+##
+##def plot_all_trace(file): 
+##    df = get_features_df(file)
+##    num_traces = df.shape[0]       
+##    for i in range(0, num_traces-9, 4):
+##        for j in range(9):
+##            plt.subplot(3, 3, j+1)
+##            singlePlot(i+j, df, description, color, labels = False)
+##        plt.show()
+##
+##def plot_by_description(file, description_dict):    
+##    df = get_features_df(file) 
+##    j = 1
+##    for key, value in description_dict.items():
+##        plt.subplot(2, 1, j)
+##        for i in range(df.shape[0]):
+##            try:
+##                if key in get_feat("Description", i, df):
+##                    singlePlot(i, df, key, color = value)
+##                    print("plot for ", get_feat("Description", i, df))
+##            except TypeError:
+##                print("This for description in excel column",get_feat("Description", i, df))
+##        j += 1
+##    plt.show()
+##
+##method = {"file name":0,
+##          "Description":1,
+##          "Base":0,
+##          "Max Val":1,
+##          "Time to Max":1,
+##          "Time to 75% max":0,
+##          "Lag Time":1,
+##          "Lag Val":1,
+##          "Gradient":1,
+##          "AUC":1,
+##          "Base threshold":0,
+##          "Time to base":0,
+##          "Sample type":1,
+##          "Substrate conc":1,
+##          "Substrate codon":1
+##          }
+##
+##def percentage_positive (df):
+##    percentages = []    
+##    for i in range(5):
+##        df_sample = df.sample(replace = True, frac = 0.2)
+##        num_samples = len(df_sample)
+##        print("num samples ", num_samples)
+##        df_sample = df_sample.dropna(subset =["Lag Time"])
+##        num_positives = len(df_sample[df_sample["Lag Time"] <=100])
+##        print("num_positives ", num_positives)
+##        percentages.append(100*(num_positives/num_samples))
+##    print(percentages)
+##    print("False positive: ",np.mean(percentages),"% +/- ", np.std(percentages))
+##    return np.mean(percentages), np.std(percentages)
+##    
+##def mean_lagtime (df):
+##    """calculates mean of samples that have lagtimes. Those with NaN excluded"""
+##    df = df.dropna(subset = ["Lag Time"])
+##    print("Mean lagtime: ",df["Lag Time"].mean())
+##    print("Std lagtime: ",df["Lag Time"].std())
+##    print("n: ",len(df))
+##    return df.mean(), df.std()
 
 #get_features_df("Experimental plan RTQUIC17 018 AHP 65+study RETRO cases SD039 05 to 39 09.xlsx")
 
 #########  Build master frame   #################################################
                 
-mf = build_master_frame(files)
-print(mf)
-
+##mf = RTQuICData(files).getMasterFrame()
+##
+##with pd.option_context('display.max_rows',
+##                       No   ne,
+##                       #'display.max_columns',
+##                       #None
+##                       ): 
+##
+##    print(mf)
 
 ##### Reset index ###############################################################
 ##mf.set_index(pd.Series([x for x in range(len(mf))]), inplace = True)
 
 
 ###Additional columns
-mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
-mf['Substrate conc'] = mf.apply (lambda row: add_sub_conc(row), axis=1)
-mf['Substrate codon'] = mf.apply (lambda row: add_sub_codon(row), axis=1)
+##mf['Sample type'] = mf.apply (lambda row: status(row), axis=1)
+##mf['Substrate conc'] = mf.apply (lambda row: add_sub_conc(row), axis=1)
+##mf['Substrate codon'] = mf.apply (lambda row: add_sub_codon(row), axis=1)
 
 
 ####### Filter out the positive reactions from the masterframe ####################
@@ -510,13 +767,13 @@ mf['Substrate codon'] = mf.apply (lambda row: add_sub_codon(row), axis=1)
 
 
 ##### select features for printing: 1= print, 0= don't print ####################
-for_display = []
-for selected in method:
-    if method[selected]:
-        for_display.append(selected)
+##for_display = []
+##for selected in method:
+##    if method[selected]:
+##        for_display.append(selected)
 
-with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
-    print(mf[for_display])
+##with pd.option_context('display.max_rows', None, 'display.max_columns', None):    
+##    print(mf[for_display])
 
 ##from sklearn.preprocessing import MinMaxScaler
 ######
@@ -577,7 +834,7 @@ def pairwise_compare_3(var1, var2, df):
     plt.legend()
     plt.show()
 
-pairwise_compare_2( "Substrate conc", "Lag Time", mf)
+##pairwise_compare_2( "Substrate conc", "Lag Time", mf)
 
 #from pandas.plotting import scatter_matrix
 #scatter_matrix(norm_df)
