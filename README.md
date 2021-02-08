@@ -18,7 +18,7 @@ Please contact me (Alex Peden)
 ```
 
 ## Acknowledgements
-Eric Gazoni, Charlie Clark who created with openpyxl library.
+Eric Gazoni, Charlie Clark who created with openpyxl library. I need to acknowledge the people who wrote the Python programming language and the pandas and numpy libraries in particular. 
 
 ## Plotting a single RT-QuIC traces selected from a dataframe
 Once a dataframe has been generated from multiple excel files it is possible to use a function called tracePlot to plot a single trace. The trace can be selected by supplying two arguments: the name of the excel file, and the sample label. An example plot is shown below. 
@@ -66,7 +66,7 @@ Another example, this time of AUC versus lagtime is shown below
 ![AUC versus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Lag%20Time.jpeg)
 
 ## Best features for decriminating positive from negatives
-An important question is what combination of features best discriminates a positive sample from a negative sample. If we restrict the number of features to 6, their are (6(6-1))/2 = 15 pairwise combinations of features, and (6 x 6 x 6) = 216 triplet-wize combinations of features. Using a sextuplet-wize combination of feat
+An important question is what combination of features best discriminates a positive sample from a negative sample. If we restrict the number of features to 6, there are (6(6-1))/2 = 15 pairwise combinations of features,
 
 ## Plotting a scatter matrix
 It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plotting module this programme. The datapoints in this scattergram are normalised as above. The scatter_matrix provides a convenient way for searching for correlations in the data. 
@@ -74,6 +74,11 @@ It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plo
 ![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/example_scatter_matrix.png)
 
 ## Plotting a correlation heatmap
-Using functions within dataframe and matplotlib it is possible to plot a heat map of pair-wise correlations between variable. Green indicates minimal correlation, yellow is  a positive correlation and blue a negative correlation. 
+Using functions within dataframe and matplotlib it is possible to plot a heat map of pair-wise correlations between variable. Green indicates minimal correlation, yellow is  a positive correlation and blue a negative correlation. If one is looking for clusters by plotting two variables against each other, it's probably a good idea to chose two variables that are minimally correlated. 
 
 ![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/heat_map.png)
+
+## Using stripplots to focus in on one particular feature of the RT-QuIC data
+Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. 
+
+![Surf conc](https://github.com/apeden/excelMaxRow/blob/master/surf_conc.png)
