@@ -2,13 +2,16 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os, math
+import seaborn as sns
 
-toPrint = False
-##for setting NaN lag times to 100
-default_lag = True
+
+
+##toPrint = False
+####for setting NaN lag times to 100
+##default_lag = True
 basepath = "RTQuIC_for_analysis/"
-SEC_PER_CYCLE = 945.6
-num_cycles = 400
+##SEC_PER_CYCLE = 945.6
+##num_cycles = 400
 files = []
 
 plt.subplots_adjust(wspace = 0.4)
@@ -159,24 +162,34 @@ class RTQuICData(object):
 
 
 
-class RTQuICData_feat(RTQuICData):
+class RTQuICData_feat(RTQuICData):   
     def __init__(self, excelfile, start_row_col  = (1, 3),
                  numCycles = 400, SEC_PER_CYCLE = 945.6):
         super().__init__(excelfile)
         self.start_row, self.start_col = start_row_col
-        self.numCyles = numCycles
+        self.numCycles = numCycles
         self.SEC_PER_CYCLE = 945.6
         self.da = None
+        self.method_dict = {"Base":self.base,
+                            "Base threshold":self.base_threshold,
+                            "Max Val": self.maxVal,
+                            "Time to Max": self.timeToMax,
+                            "Time to 75% max": self.timeTo75Max,
+                            "Lag Time": self.lagTime,
+                            "Lag Val": self.lagVal,
+                            "Gradient": self.gradient,
+                            "AUC": self.areaUnderCurve,
+                            "Time to base": self.time_to_base}
         self.setArray()
+        self.get_features_df()
+
 
     def setArray(self):
-        try:
-            self.da = self.df.iloc[self.start_row:,
-                                self.start_col:self.start_col +\
-                                num_cycles+ 1 ]
-        except:
-            print("Could not extract numeric data as array")
-            self.da = None
+        ##try:
+        self.da = self.df.iloc[self.start_row:, self.start_col:(self.start_col + self.numCycles + 1)].to_numpy()
+        ##except:
+            ##print("Could not extract numeric data as array")
+           ## self.da = None
             
     def getArray(self):
         return self.da
@@ -211,7 +224,7 @@ class RTQuICData_feat(RTQuICData):
     def time_to_base(self, i):
         base_cyc = self.threshold_cycle(i, self.base_threshold(i))
         try:
-            base_start = base_cyc*SEC_PER_CYCLE
+            base_start = base_cyc*self.SEC_PER_CYCLE
             base_start /= 3600
             return base_start
         except:
@@ -219,7 +232,7 @@ class RTQuICData_feat(RTQuICData):
 
     def timeToMax(self, i):
         """in hours"""
-        time_to_max = np.argmax(self.da[i])*SEC_PER_CYCLE
+        time_to_max = np.argmax(self.da[i])*self.SEC_PER_CYCLE
         if not self.time_to_base(i) == np.NaN:
             return round(time_to_max/3600, 1)
         else:
@@ -228,7 +241,7 @@ class RTQuICData_feat(RTQuICData):
     def timeTo75Max(self, i):
         """in hours"""
         _75max = self._75maxVal(i)
-        time_to_0_75_max = np.argmax(self.da[i] > _75max)*SEC_PER_CYCLE
+        time_to_0_75_max = np.argmax(self.da[i] > _75max)*self.SEC_PER_CYCLE
         if not self.time_to_base(i) == np.NaN:
             return round(time_to_0_75_max/3600, 1)
         else:
@@ -237,25 +250,24 @@ class RTQuICData_feat(RTQuICData):
     def lagTime(self, i):
         v = 3* self.da[i][1]
         try:
-            lagtime_sec = self.threshold_cycle(i, v)*SEC_PER_CYCLE
+            lagtime_sec = self.threshold_cycle(i, v)*self.SEC_PER_CYCLE
             return round(lagtime_sec/3600, 1)
         except:
-            if default_lag:
-                lagtime_sec = num_cycles*SEC_PER_CYCLE
-                return round(lagtime_sec/3600, 1)
-            else:
-                return np.NaN
+            lagtime_sec = self.numCycles*self.SEC_PER_CYCLE
+            return round(lagtime_sec/3600, 1)
+
             
     def lagVal(self, i):
-        v = 3* self.da[1]
-        c = self.threshold_cycle(v)
+        v = 3* self.da[i][1]
+        c = self.threshold_cycle(i, v)
         if c != None:
-            return self.da[c]
+            return self.da[i][c]
         else:
             return np.NaN
             
-    def areaUnderCurve(self, i):
-        val_above_baseline = self.da - self.base_threshold(i)
+    def areaUnderCurve(self, i):   
+        val_above_baseline = self.da[i] - self.base(i)
+        
         area = val_above_baseline.sum()
         if area > 0:
             return area
@@ -269,9 +281,9 @@ class RTQuICData_feat(RTQuICData):
         """
         min_ = self.base_threshold(i)
         max_ = self._75maxVal(i)
-        gradient_start_cyc = self.threshold_cycle(min_)
+        gradient_start_cyc = self.threshold_cycle(i, min_)
         gradient_end_val = max_
-        gradient_end_cyc = self.threshold_cycle(max_)
+        gradient_end_cyc = self.threshold_cycle(i, max_)
         #print("gradient start flouresence" ,gradient_start_val)
         #print("gradient start cycle"       ,gradient_start_cyc)
         #print("gradient end flouresence"   ,gradient_end_val)
@@ -280,88 +292,26 @@ class RTQuICData_feat(RTQuICData):
             gradient = (max_ - min_)/(gradient_end_cyc - gradient_start_cyc)
         except:
             return np.NaN
-        gradient /= SEC_PER_CYCLE
+        gradient /= self.SEC_PER_CYCLE
         gradient *= 3600
         return round(gradient, 1)   
        
-    method_dict = {"Base":base,
-                   "Base threshold":base_threshold,
-                   "Max Val": maxVal,
-                   "Time to Max": timeToMax,
-                   "Time to 75% max": timeTo75Max,
-                   "Lag Time": lagTime,
-                   "Lag Val": lagVal,
-                   "Gradient": gradient,
-                   "AUC": areaUnderCurve,
-                   "Time to base": time_to_base}
-
     def addColumn(self, method_name):
         self.df[method_name] = np.NaN
         col_index = self.df.columns.get_loc(method_name)
-        for i in range(0, self.df.shape[0]):
-            self.getArray(i)
-            value = RTQuICData.method_dict[method_name](self, i)
+        for i in range(0, self.da.shape[0]):
+            value = self.method_dict[method_name](i)
             self.df.iat[i, col_index] = value
 
-    def addFileTag(self, file):
-        self.df["file name"] = file
-        
-    def cleanDesc(self):
-        """ modify df to create correct unique descriptions
-        of the duplicate rows (assuming duplicates are used)
-        """    
-        for i in range(0, len(self.df)-1, 2):
-            ##try:
-            ##if not pd.isnull(self.df.iat[i+1,0]):
-            self.df.iat[i,0] = str(self.df.iat[i,0]) + " " + str(self.df.iat[i+1,0])
-            self.df.iat[i+1,0] = str(self.df.iat[i,0]) + " repeat"
-            ##except:
-              ##  print("Problem cleaning labels at index ",i)
 
-    def get_features_df(self,file):
+    def get_features_df(self):
         """for excel file of rtquic data,
         Returns a full dataframe of features
-        and an associated (and comparably indexed) numpy file of the raw data
         """
-        self.getData(file)
-        try:
-            self.df.columns = self.df.iloc[0]
-        except:
-            print("Couldn't set columns for ",file)
-        self.df.drop(self.df.index[0], inplace = True)    
-        self.df = self.df[self.df.Description != 0]
-        if toPrint: print("Basic dataframe for ",file,"\n",self.df)
-        for method_name in RTQuICData.method_dict:
+
+        for method_name in self.method_dict:
             self.addColumn(method_name)
-        try:
-            self.addFileTag(file)
-        except:
-            print("problem tagging filename ", file) 
-        if clean_labels:
-            ##try:
-            self.cleanDesc()
-            if toPrint: print(self.df)
-            ##except:
-                ##print("Problem cleaning row names for ",file,"\n")
-        self.df = self.df.dropna(subset =["Description"])
-        if clean_labels:
-            self.df = self.df.loc[self.df['Description'] != "nan nan repeat"]
-            self.df = self.df.loc[self.df['Description'] != "nan nan"]
-        if toPrint:
-            print("Shape of dataframe", self.df.shape, "\n")
-        self.df = self.df.replace([np.inf, -np.inf], np.nan)
         
-    def build_master_frame(self, files):
-        self.get_features_df(self.files[0]) 
-        self.mf = self.df
-        self.df = None
-        for file in self.files[1:]:     
-            masterframe2 = None
-            try:
-                self.get_features_df(file)
-            except:
-                print("Problem building data from ",file)
-            self.mf = pd.concat([self.mf, self.df], sort = False)
 
 
 class RTQuICData_feat_65(RTQuICData):
@@ -376,13 +326,45 @@ class RTQuICData_feat_65(RTQuICData):
         df_dropna = self.df.dropna(subset =["Description"])
         return df_dropna["Base"].mean() + 5*df_dropna["Base"].std()
 
+def addSurflabels(df):
+    surfact_concs = [0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]
+    df["Surf conc"] = np.float32
+    df["Seed"] = " " 
+    surf_index = df.columns.get_loc("Surf conc")
+    seed_index = df.columns.get_loc("Seed")
+    for i in range(12*6):
+        df.iat[i, surf_index] = surfact_concs[i//12]
+        if ((i == 0) or (i%12 < 9)):
+            df.iat[i, seed_index] = "Unseeded"
+        else:
+            df.iat[i, seed_index] = "MM1 Seeded"
+    df.drop(df.tail(25).index, inplace = True)
+    return df
 
 
+surfs = {"F-127":files[20],"F-68":files[21]}
+cut_cycs = [200, 400]
+params = ["Lag Time", "Max Val", "AUC"]
 
-
-myResults = RTQuICData_feat(files[17])
-myResults.setArray()
-print(myResults.getArray())
+j = 0
+for surf, file in surfs.items():
+    for cyc in cut_cycs:
+        df = None
+        myResults = RTQuICData_feat(file, numCycles =cyc)
+        df = myResults.getData()
+        df = addSurflabels(df)
+        i = 1
+        for param in params:          
+            x_, y_  = 'Surf conc', param
+            sns.stripplot(x = x_,y = y_,hue = "Seed", data = df)
+            plt.title("Effect of "+surf+ " on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
+            i += 1
+            plt.legend([],[], frameon=False)
+            #plt.savefig(str(j)+".png")
+            plt.show()
+            j+=1
+        del df
+            #plt.savefig(surf+str(cyc)+param+".png")
 
 ##class RTQuICData(object):
 ##    def __init__(self, files):
@@ -728,12 +710,7 @@ print(myResults.getArray())
                 
 ##mf = RTQuICData(files).getMasterFrame()
 ##
-##with pd.option_context('display.max_rows',
-##                       No   ne,
-##                       #'display.max_columns',
-##                       #None
-##                       ): 
-##
+
 ##    print(mf)
 
 ##### Reset index ###############################################################
