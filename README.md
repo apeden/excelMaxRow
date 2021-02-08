@@ -81,4 +81,4 @@ Using functions within dataframe and matplotlib it is possible to plot a heat ma
 ## Using stripplots to focus in on one particular feature of the RT-QuIC data
 Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. 
 
-![Surf conc](https://github.com/apeden/excelMaxRow/blob/master/surf_conc.png)
+![Surf_conc](https://github.com/apeden/excelMaxRow/blob/master/surf_conc.png)
