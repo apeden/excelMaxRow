@@ -79,6 +79,13 @@ Using functions within dataframe and matplotlib it is possible to plot a heat ma
 ![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/heat_map.png)
 
 ## Using stripplots to focus in on one particular feature of the RT-QuIC data
-Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. 
+Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. The following figure shows the effect of various concentrations of a chemical on the conversion time (lag time). The chemical has a moderating effect down to quite low concentrations. 
 
 ![Surf_conc](https://github.com/apeden/excelMaxRow/blob/master/surf_conc.png)
+
+In contrast, another chemical does not appear to inhibit conversion to any significant degree. 
+
+![Surf_conc2](https://github.com/apeden/excelMaxRow/blob/master/surf_conc2.png)
+
+
+
