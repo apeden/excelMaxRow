@@ -66,7 +66,7 @@ Another example, this time of AUC versus lagtime is shown below
 ![AUC versus time to max](https://github.com/apeden/excelMaxRow/blob/master/AUC%20vs%20Lag%20Time.jpeg)
 
 ## Best features for decriminating positive from negatives
-An important question is what combination of features best discriminates a positive sample from a negative sample. If we restrict the number of features to 6, there are (6(6-1))/2 = 15 pairwise combinations of features,
+An important question is what combination of features best discriminates a positive sample from a negative sample. If we restrict the number of features to 6, there are (6(6-1))/2 = 15 pairwise combinations of features.
 
 ## Plotting a scatter matrix
 It is possible to plot a scatter_matrix of scattergrams using the matplotlip.plotting module this programme. The datapoints in this scattergram are normalised as above. The scatter_matrix provides a convenient way for searching for correlations in the data. 
@@ -79,7 +79,7 @@ Using functions within dataframe and matplotlib it is possible to plot a heat ma
 ![Scatter_matrix](https://github.com/apeden/excelMaxRow/blob/master/heat_map.png)
 
 ## Using stripplots to focus in on one particular feature of the RT-QuIC data
-Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. The following figure shows the effect of various concentrations of a chemical on the conversion time (lag time). The chemical has a moderating effect down to quite low concentrations. 
+Once the features have been calculated and put into a pandas dataframe, a useful method for plotting the data is strip plots. Seaborn is a useful library for plotting stripplots. The following figure shows the effect of various concentrations of a chemical on the conversion time (lag time). The chemical has a moderating effect, even down to quite low concentrations. 
 
 ![Surf_conc](https://github.com/apeden/excelMaxRow/blob/master/surf_conc.png)
 
