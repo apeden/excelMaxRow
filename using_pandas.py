@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import os, math
 import seaborn as sns
 
-
-
 ##toPrint = False
 ####for setting NaN lag times to 100
 ##default_lag = True
@@ -183,7 +181,6 @@ class RTQuICData_feat(RTQuICData):
         self.setArray()
         self.get_features_df()
 
-
     def setArray(self):
         ##try:
         self.da = self.df.iloc[self.start_row:, self.start_col:(self.start_col + self.numCycles + 1)].to_numpy()
@@ -342,10 +339,10 @@ def addSurflabels(df):
     return df
 
 
+##plotting strip plots
 surfs = {"F-127":files[20],"F-68":files[21]}
 cut_cycs = [200, 400]
 params = ["Lag Time", "Max Val", "AUC"]
-
 j = 0
 for surf, file in surfs.items():
     for cyc in cut_cycs:
@@ -360,11 +357,9 @@ for surf, file in surfs.items():
             plt.title("Effect of "+surf+ " on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
             i += 1
             plt.legend([],[], frameon=False)
-            #plt.savefig(str(j)+".png")
             plt.show()
             j+=1
         del df
-            #plt.savefig(surf+str(cyc)+param+".png")
 
 ##class RTQuICData(object):
 ##    def __init__(self, files):
