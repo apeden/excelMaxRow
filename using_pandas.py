@@ -15,11 +15,9 @@ files = []
 plt.subplots_adjust(wspace = 0.4)
 plt.subplots_adjust(hspace = 0.6)
 
-
 """data and variables below relevant to 65+ study"""
 ##for relabelling duplicate samples
 clean_labels = True
-
 
 POSITIVES =(
 "38/07",
@@ -52,8 +50,6 @@ type_colour = {"Blinded positive":"r",
                "VV2 Positive control":"m",
                "Negative control":"g",
                "test sample":"y"}
-
-
 
 """data below relevant to the analysis of substrates"""
 
@@ -149,7 +145,7 @@ class RTQuICData(object):
             print("Check sheet name")
             self.df = None
         except:
-            print("In getData, Couldn't make dataframe using file ",file)
+            print("In getData, Couldn't make dataframe using file ",self.file)
             self.df = None
     def getData(self):
         return self.df
@@ -164,6 +160,7 @@ class RTQuICData_feat(RTQuICData):
     def __init__(self, excelfile, start_row_col  = (1, 3),
                  numCycles = 400, SEC_PER_CYCLE = 945.6):
         super().__init__(excelfile)
+        print("RTQuICData_feat obj instatiated with" , excelfile)
         self.start_row, self.start_col = start_row_col
         self.numCycles = numCycles
         self.SEC_PER_CYCLE = 945.6
@@ -323,43 +320,75 @@ class RTQuICData_feat_65(RTQuICData):
         df_dropna = self.df.dropna(subset =["Description"])
         return df_dropna["Base"].mean() + 5*df_dropna["Base"].std()
 
-def addSurflabels(df):
-    surfact_concs = [0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]
-    df["Surf conc"] = np.float32
-    df["Seed"] = " " 
-    surf_index = df.columns.get_loc("Surf conc")
-    seed_index = df.columns.get_loc("Seed")
-    for i in range(12*6):
-        df.iat[i, surf_index] = surfact_concs[i//12]
-        if ((i == 0) or (i%12 < 9)):
-            df.iat[i, seed_index] = "Unseeded"
-        else:
-            df.iat[i, seed_index] = "MM1 Seeded"
-    df.drop(df.tail(25).index, inplace = True)
-    return df
+
 
 
 ##plotting strip plots
-surfs = {"F-127":files[20],"F-68":files[21]}
-cut_cycs = [200, 400]
-params = ["Lag Time", "Max Val", "AUC"]
-j = 0
-for surf, file in surfs.items():
-    for cyc in cut_cycs:
-        df = None
-        myResults = RTQuICData_feat(file, numCycles =cyc)
-        df = myResults.getData()
-        df = addSurflabels(df)
-        i = 1
-        for param in params:          
-            x_, y_  = 'Surf conc', param
-            sns.stripplot(x = x_,y = y_,hue = "Seed", data = df)
-            plt.title("Effect of "+surf+ " on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
-            i += 1
-            plt.legend([],[], frameon=False)
-            plt.show()
-            j+=1
-        del df
+exp5 = ["F-127",files[20],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+exp6 = ["F-68",files[21],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+exp7 = ["F-127",files[22],[0, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.0005]]
+exp8 = ["F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+
+class Strip(object):
+    def plotSurf(self):
+        for cyc in self.cut_cycs:
+            self.df = None
+            print("file to analyse: ",self.file)
+            myResults = RTQuICData_feat(self.file, numCycles =cyc)
+            self.df = myResults.getData()
+            self.addSurflabels()
+            for param in self.params:          
+                x_, y_  = 'Surf conc', param
+                sns.stripplot(x = x_,y = y_,hue = "Seed", data = self.df)
+                plt.title("Effect of "+self.surf_name+ " on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
+                plt.legend([],[], frameon=False)
+                plt.show()
+            del self.df
+
+
+class Scatter(object):
+    def plotSurf(self):
+        for cyc in self.cut_cycs:
+            self.df = None
+            print("file to analyse: ",self.file)
+            myResults = RTQuICData_feat(self.file, numCycles =cyc)
+            self.df = myResults.getData()
+            self.addSurflabels()
+            for param in self.params:          
+                x_, y_  = 'Surf conc', param
+                plt.scatter(x = x_,y = y_, data = self.df)
+                plt.title("Effect of "+self.surf_name+ " on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
+                plt.legend([],[], frameon=False)
+                plt.show()
+            del self.df
+
+
+
+class PlotSurf(Scatter):
+    def __init__(self, surf_name, file, concs):
+        self.surf_name = surf_name
+        self.file = file
+        self.concs = concs
+        self.cut_cycs = [200, 400]
+        self.params = ["Lag Time", "Max Val", "AUC"]
+        self.df = None
+    def addSurflabels(self):
+        self.df["Surf conc"] = np.float32
+        self.df["Seed"] = " " 
+        surf_index = self.df.columns.get_loc("Surf conc")
+        seed_index = self.df.columns.get_loc("Seed")
+        for i in range(12*len(self.concs)):
+            self.df.iat[i, surf_index] = self.concs[i//12]
+            if ((i == 0) or (i%12 < 9)):
+                self.df.iat[i, seed_index] = "Unseeded"
+            else:
+                self.df.iat[i, seed_index] = "MM1 Seeded"
+        self.df.drop(self.df.tail(25).index, inplace = True)
+    
+
+e = PlotSurf("F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
+e.plotSurf()
+
 
 ##class RTQuICData(object):
 ##    def __init__(self, files):
