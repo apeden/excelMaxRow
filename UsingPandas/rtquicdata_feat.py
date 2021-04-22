@@ -1,4 +1,5 @@
 import rtquicdata as rd
+import numpy as np
 
 class RTQuICData_feat(rd.RTQuICData):   
     def __init__(self, excelfile, start_row_col  = (1, 3),

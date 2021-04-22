@@ -1,4 +1,6 @@
 import scatter as sc
+import numpy as np
+import matplotlib as pyplot
 
 class PlotSurf(sc.Scatter):
     def __init__(self, surf_name, file, concs):

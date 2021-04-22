@@ -8,6 +8,7 @@ import rtquicdata_feat
 import rtquicdata_feat_65
 import strip
 import scatter
+import plotsurf
 
 ##toPrint = False
 ####for setting NaN lag times to 100
@@ -132,7 +133,8 @@ exp7 = ["F-127",files[22],[0, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.00
 exp8 = ["F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
 
 
-e = plotsurf.PlotSurf("F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
+e = plotsurf.PlotSurf("F-68",files[23],[0.00001, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
+##0.00001 was actually zero, but I am plotting a log scale
 e.plotSurf()
 
 

@@ -1,3 +1,5 @@
+import pandas as pd
+
 class RTQuICData(object):
     basepath = "RTQuIC_for_analysis/"
     sheet_name = "All Cycles"
@@ -14,19 +16,19 @@ class RTQuICData(object):
         return self.df
     def setData(self):
         """If possible, return raw dataframe using excel file sheet as input"""
-        try:
-            self.df = pd.read_excel(RTQuICData.basepath + self.file,
-                               RTQuICData.sheet_name,
-                               RTQuICData.skiprows)
-        except FileNotFoundError:
-            print("In getData, File ",self.file," not found")
-            self.df = None
-        except ValueError:
-            print("Check sheet name")
-            self.df = None
-        except:
-            print("In getData, Couldn't make dataframe using file ",self.file)
-            self.df = None
+        ##try:
+        self.df = pd.read_excel(RTQuICData.basepath + self.file,
+                           RTQuICData.sheet_name,
+                           RTQuICData.skiprows)
+##        except FileNotFoundError:
+##            print("In getData, File ",self.file," not found")
+##            self.df = None
+##        except ValueError:
+##            print("Check sheet name")
+##            self.df = None
+##        except:
+##            print("In getData, Couldn't make dataframe using file ",self.file)
+##            self.df = None
     def getData(self):
         return self.df
     def __str__(self):
