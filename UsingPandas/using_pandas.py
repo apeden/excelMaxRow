@@ -9,6 +9,7 @@ import rtquicdata_feat_65
 import strip
 import scatter
 import plotsurf
+import surf as sf
 
 ##toPrint = False
 ####for setting NaN lag times to 100
@@ -125,6 +126,9 @@ with os.scandir(basepath) as entries:
         print(file)
 
 
+f68 = sf.Surf("F-68", 1800, 8350, 80)
+
+
 
 ##plotting strip plots
 exp5 = ["F-127",files[20],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
@@ -133,12 +137,12 @@ exp7 = ["F-127",files[22],[0, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.00
 exp8 = ["F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
 
 
-e = plotsurf.PlotSurf("F-68",files[23],[0.00001, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
+e = plotsurf.PlotSurf(f68,files[23],[0.00001, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
 ##0.00001 was actually zero, but I am plotting a log scale
 e.plotSurf()
 
 
-surfs = {"F-127"
+surfs = {"F-127", 1800, 8350, 80)
 
 
 
