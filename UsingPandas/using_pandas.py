@@ -114,7 +114,6 @@ codon_colour = {"M":"r",
                "V":"b",
                }
 
-
 with os.scandir(basepath) as entries:
     for entry in entries:
         try:
@@ -125,26 +124,25 @@ with os.scandir(basepath) as entries:
     for file in files:
         print(file)
 
-
 f68 = sf.Surf("F-68", 1800, 8350, 80)
-
-
+f127 = sf.Surf("F-127", 3600, 12600, 70)
+f38 = sf.Surf("F-38", 900, 5000, 80)
+f108 = sf.Surf("F-108", 3000, 14000, 80)
+p84 = sf.Surf("P-84", 2250, 3750, 80)
 
 ##plotting strip plots
-exp5 = ["F-127",files[20],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
-exp6 = ["F-68",files[21],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
-exp7 = ["F-127",files[22],[0, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.0005]]
-exp8 = ["F-68",files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+exp5 = [f127,files[20],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+exp6 = [f68,files[21],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
+exp7 = [f127,files[22],[0, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.0005]]
+exp8 = [f68,files[23],[0, 0.0001, 0.0005, 0.001, 0.0011, 0.1]]
 
 
-e = plotsurf.PlotSurf(f68,files[23],[0.00001, 0.0001, 0.0005, 0.001, 0.0011, 0.1])
+e = plotsurf.PlotSurf(f68,files[23],[0.00001, 0.000033, 0.000066, 0.0001, 0.00016, 0.00033, 0.0005], cut_cycs = [200], params = ["Lag Time"])
 ##0.00001 was actually zero, but I am plotting a log scale
+
 e.plotSurf()
-
-
-surfs = {"F-127", 1800, 8350, 80)
-
-
+e.plotSurf("Surf conc mM")
+e.plotSurf("Surf conc PO mM")
 
 ##class RTQuICData(object):
 ##    def __init__(self, files):
