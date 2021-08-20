@@ -20,7 +20,7 @@ class RTQuICplate(object):
         ##for each additive dilution
         self.subMastermixes = []
         self.plate = {} #it would be much better if this were a dataframe
-        self.df_plate = pd.DataFrame(index=np.arange(96),columns = ["Well","Sub","Buff","Add","Conc","Seed","Seed vol"])
+        self.df_plate = pd.DataFrame(index=np.arange(96),columns = ["Well row","Well col","Sub","Buff","Add","Conc","Seed","Seed vol"])
         self.setPlate()
         self.setMasterMixes()
         self.setSubMasterMixes()
@@ -35,13 +35,14 @@ class RTQuICplate(object):
                         for conc in add.get_concs():
                             for seed in self.seeds:
                                 for r in range(seed.get_numReps()):
-                                    self.df_plate.iloc[[i],[0]] = [RTQuICplate.row[i//12] + str((i%12)+1)]
-                                    self.df_plate.iloc[[i],[1]] = sub.get_name()
-                                    self.df_plate.iloc[[i],[2]] = buff.get_name()
-                                    self.df_plate.iloc[[i],[3]] = add.get_name()
-                                    self.df_plate.iloc[[i],[4]] = str(conc)
-                                    self.df_plate.iloc[[i],[5]] = seed.get_name()
-                                    self.df_plate.iloc[[i],[6]] = seed.get_seedVol()
+                                    self.df_plate.iloc[[i],[0]] = [RTQuICplate.row[i//12]]
+                                    self.df_plate.iloc[[i],[1]] = [(i%12)+1]
+                                    self.df_plate.iloc[[i],[2]] = sub.get_name()
+                                    self.df_plate.iloc[[i],[3]] = buff.get_name()
+                                    self.df_plate.iloc[[i],[4]] = add.get_name()
+                                    self.df_plate.iloc[[i],[5]] = str(conc)
+                                    self.df_plate.iloc[[i],[6]] = seed.get_name()
+                                    self.df_plate.iloc[[i],[7]] = seed.get_seedVol()
                                     i += 1
         else:
             raise ValueError('full')

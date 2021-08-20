@@ -6,7 +6,7 @@ class RTQuICData(object):
     skiprows = 10,
     usecols='A,N:OW'
     
-    def __init__(self, excelfile):
+    def __init__(self, excelfile, ):
         self.file = excelfile
         self.file_name = excelfile.__str__()
         self.df = None
@@ -17,9 +17,9 @@ class RTQuICData(object):
     def setData(self):
         """If possible, return raw dataframe using excel file sheet as input"""
         ##try:
-        self.df = pd.read_excel(RTQuICData.basepath + self.file,
-                           RTQuICData.sheet_name,
-                           RTQuICData.skiprows)
+        self.df = pd.read_excel(self.basepath + self.file,
+                           self.sheet_name,
+                           self.skiprows)
 ##        except FileNotFoundError:
 ##            print("In getData, File ",self.file," not found")
 ##            self.df = None
