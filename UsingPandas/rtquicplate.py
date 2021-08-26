@@ -40,7 +40,7 @@ class RTQuICplate(object):
                                     self.df_plate.iloc[[i],[2]] = sub.get_name()
                                     self.df_plate.iloc[[i],[3]] = buff.get_name()
                                     self.df_plate.iloc[[i],[4]] = add.get_name()
-                                    self.df_plate.iloc[[i],[5]] = str(conc)
+                                    self.df_plate.iloc[[i],[5]] = conc
                                     self.df_plate.iloc[[i],[6]] = seed.get_name()
                                     self.df_plate.iloc[[i],[7]] = seed.get_seedVol()
                                     i += 1

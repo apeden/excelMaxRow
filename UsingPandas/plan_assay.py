@@ -70,6 +70,7 @@ substrates_65 = [su.Substrate("HaFLPrP 'M'", "Hu recPrP substrate M at codon 129
 
 
 ##========= DRAW UP PLAN FOR PLATE =============================================
+##========= Generate plate object ==============================
 
 import rtquicplate as r
 
@@ -78,18 +79,23 @@ import rtquicplate as r
 ##ex7 = RTQuICplate(substrates_M, buffermixes_S, additive_68_2, seeds_M, "18-02-21")
 ##ex8 = RTQuICplate(substrates_M, buffermixes_S, additive_68, seeds_M, "?-12-20")
 ##ex9 = r.RTQuICplate(substrates_M, buffermixes_S, additive_P84_P108, seeds_M2, "?-5-21")
-##ex10 = r.RTQuICplate(substrates_M, buffermixes_S, additive_Tetronic_F127, seeds_M2, "?-8-21")
-##ex11 = r.RTQuICplate(substrates_65, buffermixes_S, additive_blank, seeds_65, "?-8-21")
+##rtquic21_004 = r.RTQuICplate(substrates_M, buffermixes_S, additive_Tetronic_F127, seeds_M2, "?-8-21")
+rtquic21_005a = r.RTQuICplate(substrates_65, buffermixes_S, additive_blank, seeds_65, "?-8-21")
 ##ex12 = r.RTQuICplate(substrates_65, buffermixes_S, additive_F127, seeds_M3, "?-8-21")
-ex12a = r.RTQuICplate(substrates_65, buffermixes_S, additive_Tetronic_F127, seeds_M3, "?-8-21")
+##rtquic21_005b = r.RTQuICplate(substrates_65, buffermixes_S, additive_Tetronic_F127, seeds_M3, "?-8-21")
 
-ex12a.get_mastermixes()
-plan_df = ex12a.getPlate()
+##========= Review mastermix details ============================
+
+##ex12a.get_mastermixes()
+##rtquic21_004.get_mastermixes()
+##rtquic21_005.get_mastermixes()
+
+##========= Get plan data frame ================================
+plan_df = rtquic21_005a.getPlate()
 plan_df["Seeded"] = True
 plan_df.loc[plan_df["Seed"] == "Water", 'Seeded'] = False
-plan_df = plan_df.iloc[0:52,:]
 
-##print(df)
+print(plan_df)
 ##print("\n======\nF-127 concentrations")
 ##print(df.pivot(index = "Well row", columns = "Well col", values = "Conc"))
 ##print("\n======\nSeed scheme")
@@ -99,34 +105,56 @@ plan_df = plan_df.iloc[0:52,:]
 
 import rtquicdata_feat as d 
 
-data = d.RTQuICData_feat("RTQUIC_21_004.xlsx", numCycles = 200)
+data = d.RTQuICData_feat("RTQUIC_21_005.xlsx", numCycles = 400)
+
+## data = d.RTQuICData_feat("RTQUIC_21_005.xlsx", numCycles = 200)
+
 data_df = data.getData()
-print(data_df["Lag Time"])
+print(data_df.columns)
+
+## print(data_df["Lag Time"])
 
 ##====== MERGE TWO DFS INTO A MASTER FRAME =======================================================
 
 mf = plan_df.join(data_df)
-print(mf[["Add","Conc","Seed","Seeded","Lag Time"]])
+for c in mf.columns:
+    print(c)
 
+##=====ISOLATE RESULTS OF JUST ONE POLOXAMER=============
 
-##=====ISOLATE RESULTS OF JUST ONE POLOXAMER============================
-mf_T90R4 = mf.iloc[:,0:28]
-print(mf_T90R4[["Add","Conc","Seed","Seeded","Lag Time"]])
+##mf_T90R4 = mf.iloc[0:42,:]
+##mf_F127 = pd.concat([mf.iloc[0:6,:],mf.iloc[42:78,:]])
+##print(mf_T90R4[["Add","Conc","Seed","Seeded","Lag Time"]])
+##print(mf_F127[["Add","Conc","Seed","Seeded","Lag Time"]])
 
-##=======PLOT LAG TIME VERSUS CONC=======================
+##=======PLOT [FEATURE] VERSUS CONC OF ADDITIVE ==========
 
+import matplotlib.pyplot as plt
 
-
-##groups = self.df.groupby("Seed")
+##groups = mf_T90R4.groupby("Seed")
+##groups = mf_F127.groupby("Seed")
+##
 ##for name, group in groups:
-##    x_, y_  = group[xunits], group["Lag Time"]
+##    x_, y_  = group["Conc"], group["AUC"]
 ##    plt.scatter(x = x_,y = y_, label = name)
-##    plt.title("Effect of "+self.surf.get_name()+ \
-##" on RTQuIC "+param+ ": "+ str(cyc//4)+ " hours ")
-##                    plt.xlabel(xunits)
-##                    #plt.xlim(0.000001,1)
-##                    plt.xscale("log")
-##                    plt.ylabel(param)
-##                plt.legend()
-##                plt.show()
+##    plt.title("Effect of F-127 on Area Under Curve")
+##    plt.xlabel("Conc (w/v) of F-127 (%)")
+##    plt.xlim(9e-6,2e-3)
+##    plt.xscale("log")
+##    plt.ylabel("AUC arb units")
+##    ##plt.legend()
+##    plt.legend(bbox_to_anchor=(1.1, 1.15))
+##plt.show()
+
+##==========PLOT TRACES OF SELECTED REACTIONS=====
+
+import traceplotter as t
+
+traces = t.TracePlotter(mf)
+
+## plots array of separate traces, entitled with seed name, showing baseline
+traces.plot((0,6))
+
+
+
 
